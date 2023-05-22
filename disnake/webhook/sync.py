@@ -182,10 +182,9 @@ class WebhookAdapter:
 
                         if response.status_code == 403:
                             raise Forbidden(response, data)
-                        elif response.status_code == 404:
+                        if response.status_code == 404:
                             raise NotFound(response, data)
-                        else:
-                            raise HTTPException(response, data)
+                        raise HTTPException(response, data)
 
                 except OSError as e:
                     if attempt < 4 and e.errno == ECONNRESET:
@@ -1023,7 +1022,7 @@ class SyncWebhook(BaseWebhook):
         thread_id: Optional[int] = None
         if thread is not MISSING and thread_name is not None:
             raise TypeError("only one of thread and thread_name can be provided.")
-        elif thread is not MISSING:
+        if thread is not MISSING:
             thread_id = thread.id
 
         params = handle_message_parameters(
@@ -1061,6 +1060,7 @@ class SyncWebhook(BaseWebhook):
                     f.close()
         if wait:
             return self._create_message(data)
+        return None
 
     def fetch_message(self, id: int, /) -> SyncWebhookMessage:
         """Retrieves a single :class:`SyncWebhookMessage` owned by this webhook.

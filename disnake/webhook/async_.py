@@ -204,10 +204,9 @@ class AsyncWebhookAdapter:
 
                         if response.status == 403:
                             raise Forbidden(response, data)
-                        elif response.status == 404:
+                        if response.status == 404:
                             raise NotFound(response, data)
-                        else:
-                            raise HTTPException(response, data)
+                        raise HTTPException(response, data)
 
                 except OSError as e:
                     if attempt < 4 and e.errno == ECONNRESET:
@@ -1667,7 +1666,7 @@ class Webhook(BaseWebhook):
         thread_id: Optional[int] = None
         if thread is not MISSING and thread_name is not None:
             raise TypeError("only one of thread and thread_name can be provided.")
-        elif thread is not MISSING:
+        if thread is not MISSING:
             thread_id = thread.id
 
         params = handle_message_parameters(

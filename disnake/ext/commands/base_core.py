@@ -71,7 +71,7 @@ def wrap_callback(coro):
         except CommandError:
             raise
         except asyncio.CancelledError:
-            return
+            return None
         except Exception as exc:
             raise CommandInvokeError(exc) from exc
         return ret
@@ -220,13 +220,12 @@ class InvokableApplicationCommand(ABC):
         return self._ensure_assignment_on_copy(copy)
 
     def _update_copy(self: AppCommandT, kwargs: Dict[str, Any]) -> AppCommandT:
-        if kwargs:
-            kw = kwargs.copy()
-            kw.update(self.__original_kwargs__)
-            copy = type(self)(self.callback, **kw)
-            return self._ensure_assignment_on_copy(copy)
-        else:
+        if not kwargs:
             return self.copy()
+        kw = kwargs.copy()
+        kw.update(self.__original_kwargs__)
+        copy = type(self)(self.callback, **kw)
+        return self._ensure_assignment_on_copy(copy)
 
     @property
     def dm_permission(self) -> bool:
@@ -295,8 +294,7 @@ class InvokableApplicationCommand(ABC):
         """
         if self.cog is not None:
             return await self.callback(self.cog, interaction, *args, **kwargs)
-        else:
-            return await self.callback(interaction, *args, **kwargs)
+        return await self.callback(interaction, *args, **kwargs)
 
     def _prepare_cooldowns(self, inter: ApplicationCommandInteraction) -> None:
         if self._buckets.valid:
@@ -430,13 +428,12 @@ class InvokableApplicationCommand(ABC):
         self, inter: ApplicationCommandInteraction, error: CommandError
     ) -> Any:
         if not self.has_error_handler():
-            return
+            return None
 
         injected = wrap_callback(self.on_error)
         if self.cog is not None:
             return await injected(self.cog, inter, error)
-        else:
-            return await injected(inter, error)
+        return await injected(inter, error)
 
     async def _call_external_error_handlers(
         self, inter: ApplicationCommandInteraction, error: CommandError

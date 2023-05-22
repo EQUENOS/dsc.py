@@ -523,7 +523,7 @@ class BotBase(CommonBotBase, GroupMixin):
 
         if prefix is None:
             return ctx
-        elif isinstance(prefix, str):
+        if isinstance(prefix, str):
             if not view.skip_string(prefix):
                 return ctx
         else:

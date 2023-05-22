@@ -542,7 +542,7 @@ class FFmpegOpusAudio(FFmpegAudio):
         except Exception:
             if not fallback:
                 _log.exception("Probe '%s' using '%s' failed", method, executable)
-                return  # type: ignore
+                return None  # type: ignore
 
             _log.exception("Probe '%s' using '%s' failed, trying fallback", method, executable)
             try:

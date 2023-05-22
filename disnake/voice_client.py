@@ -372,8 +372,7 @@ class VoiceClient(VoiceProtocol):
                     await asyncio.sleep(1 + i * 2.0)
                     await self.voice_disconnect()
                     continue
-                else:
-                    raise
+                raise
 
         if self._runner is MISSING:
             self._runner = self.loop.create_task(self.poll_voice_ws(reconnect))
@@ -445,8 +444,7 @@ class VoiceClient(VoiceProtocol):
                             )
                             await self.disconnect()
                             break
-                        else:
-                            continue
+                        continue
 
                 if not reconnect:
                     await self.disconnect()

@@ -101,7 +101,7 @@ class TicTacToe(disnake.ui.View):
         def check_winner(value: int) -> Optional[Player]:
             if value == Player.O * 3:
                 return Player.O
-            elif value == Player.X * 3:
+            if value == Player.X * 3:
                 return Player.X
             return None
 

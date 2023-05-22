@@ -854,8 +854,7 @@ class HelpCommand:
 
         if isinstance(cmd, Group):
             return await self.send_group_help(cmd)
-        else:
-            return await self.send_command_help(cmd)
+        return await self.send_command_help(cmd)
 
 
 class DefaultHelpCommand(HelpCommand):
@@ -993,10 +992,9 @@ class DefaultHelpCommand(HelpCommand):
         ctx = self.context
         if self.dm_help is True:
             return ctx.author
-        elif self.dm_help is None and len(self.paginator) > self.dm_help_threshold:
+        if self.dm_help is None and len(self.paginator) > self.dm_help_threshold:
             return ctx.author
-        else:
-            return ctx.channel
+        return ctx.channel
 
     async def prepare_help_command(self, ctx, command) -> None:
         self.paginator.clear()
@@ -1237,10 +1235,9 @@ class MinimalHelpCommand(HelpCommand):
         ctx = self.context
         if self.dm_help is True:
             return ctx.author
-        elif self.dm_help is None and len(self.paginator) > self.dm_help_threshold:
+        if self.dm_help is None and len(self.paginator) > self.dm_help_threshold:
             return ctx.author
-        else:
-            return ctx.channel
+        return ctx.channel
 
     async def prepare_help_command(self, ctx, command) -> None:
         self.paginator.clear()

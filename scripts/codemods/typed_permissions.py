@@ -140,7 +140,7 @@ class PermissionTypings(codemod.VisitorBasedCodemodCommand):
                 'a function cannot be decorated with "_overload_with_permissions" and not take any kwargs unless it is an overload.'
             )
         # always true if this isn't an overload
-        elif node.params.star_kwarg:
+        if node.params.star_kwarg:
             # use the existing annotation if one exists
             annotation = node.params.star_kwarg.annotation
             if annotation is None:

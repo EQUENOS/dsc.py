@@ -442,12 +442,13 @@ class InteractionBotBase(CommonBotBase):
 
         if len(chain) == 1:
             return slash
-        elif len(chain) == 2:
+        if len(chain) == 2:
             return slash.children.get(chain[1])
-        elif len(chain) == 3:
+        if len(chain) == 3:
             group = slash.children.get(chain[1])
             if isinstance(group, SubCommandGroup):
                 return group.children.get(chain[2])
+        return None
 
     def get_user_command(self, name: str) -> Optional[InvokableUserCommand]:
         """Gets an :class:`InvokableUserCommand` from the internal list

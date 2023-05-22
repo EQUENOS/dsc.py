@@ -454,6 +454,7 @@ class GuildChannel(ABC):
 
         if options:
             return await self._state.http.edit_channel(self.id, reason=reason, **options)
+        return None
 
     def _fill_overwrites(self, data: GuildChannelPayload) -> None:
         self._overwrites = []
@@ -1633,7 +1634,7 @@ class Messageable:
         if view is not None and components is not None:
             raise TypeError("cannot pass both view and components parameter to send()")
 
-        elif view:
+        if view:
             if not hasattr(view, "__discord_ui_view__"):
                 raise TypeError(f"view parameter must be View not {view.__class__!r}")
 
@@ -1655,7 +1656,7 @@ class Messageable:
         if files is not None:
             if len(files) > 10:
                 raise ValueError("files parameter must be a list of up to 10 elements")
-            elif not all(isinstance(file, File) for file in files):
+            if not all(isinstance(file, File) for file in files):
                 raise TypeError("files parameter must be a list of File")
 
             try:

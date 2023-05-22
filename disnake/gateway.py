@@ -728,9 +728,8 @@ class DiscordWebSocket:
             if self._can_handle_close():
                 _log.info("Websocket closed with %s, attempting a reconnect.", code)
                 raise ReconnectWebSocket(self.shard_id) from None
-            else:
-                _log.info("Websocket closed with %s, cannot reconnect.", code)
-                raise ConnectionClosed(self.socket, shard_id=self.shard_id, code=code) from None
+            _log.info("Websocket closed with %s, cannot reconnect.", code)
+            raise ConnectionClosed(self.socket, shard_id=self.shard_id, code=code) from None
 
     async def debug_send(self, data: str, /) -> None:
         await self._rate_limiter.block()

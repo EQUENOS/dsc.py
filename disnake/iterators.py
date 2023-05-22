@@ -290,7 +290,7 @@ class HistoryIterator(_AsyncIterator["Message"]):
                 raise ValueError("history does not support around with limit=None")
             if self.limit > 101:
                 raise ValueError("history max limit 101 when specifying around parameter")
-            elif self.limit == 101:
+            if self.limit == 101:
                 self.limit = 100  # Thanks Discord
 
             self._retrieve_messages = self._retrieve_messages_around_strategy
@@ -964,8 +964,7 @@ class GuildScheduledEventUserIterator(_AsyncIterator[Union["User", "Member"]]):
             return guild.get_member(int(user_data["id"])) or Member(
                 data=member_data, user_data=user_data, guild=guild, state=self.state
             )
-        else:
-            return self.state.store_user(data["user"])
+        return self.state.store_user(data["user"])
 
     async def fill_users(self) -> None:
         if not self._get_retrieve():

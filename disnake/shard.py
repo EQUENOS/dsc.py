@@ -367,7 +367,7 @@ class AutoShardedClient(Client):
                 raise ClientException(
                     "When passing manual shard_ids, you must provide a shard_count."
                 )
-            elif not isinstance(self.shard_ids, (list, tuple)):
+            if not isinstance(self.shard_ids, (list, tuple)):
                 raise ClientException("shard_ids parameter must be a list or a tuple.")
 
         # instead of a single websocket, we have multiple
@@ -449,6 +449,7 @@ class AutoShardedClient(Client):
         # keep reading the shard while others connect
         self.__shards[shard_id] = ret = Shard(ws, self, self.__queue.put_nowait)
         ret.launch()
+        return None
 
     async def launch_shards(self, *, ignore_session_start_limit: bool = False) -> None:
         shard_count, gateway, session_start_limit = await self.http.get_bot_gateway(
@@ -492,7 +493,10 @@ class AutoShardedClient(Client):
                     if item.error.code != 1000:
                         raise item.error
                 return
-            elif item.type in (EventType.identify, EventType.resume):
+            elif item.type in (  # noqa: RET505 # needs to be refactored
+                EventType.identify,
+                EventType.resume,
+            ):
                 await item.shard.reidentify(item.error)
             elif item.type == EventType.reconnect:
                 await item.shard.reconnect()

@@ -265,5 +265,4 @@ class PartialEmoji(_EmojiTag, AssetMixin):
         # note: API only supports exactly one of `name` and `id` being set
         if emoji.id:
             return None, emoji.id
-        else:
-            return emoji.name, None
+        return emoji.name, None

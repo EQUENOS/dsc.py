@@ -767,7 +767,7 @@ class Guild(Hashable):
 
     def _resolve_channel(self, id: Optional[int], /) -> Optional[Union[GuildChannel, Thread]]:
         if id is None:
-            return
+            return None
 
         return self._channels.get(id) or self._threads.get(id)
 
@@ -4172,6 +4172,7 @@ class Guild(Hashable):
 
         if not self._state.is_guild_evicted(self):
             return await self._state.chunk_guild(self, cache=cache)
+        return None
 
     async def query_members(
         self,

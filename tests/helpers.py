@@ -60,7 +60,7 @@ class freeze_time(ContextManager):
 
             return wrap_async  # type: ignore
 
-        else:
+        else:  # noqa: RET505
 
             @functools.wraps(func)
             def wrap_sync(*args, **kwargs):

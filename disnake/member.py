@@ -462,6 +462,7 @@ class Member(disnake.abc.Messageable, _UserTag):
             u.name, u._avatar, u.discriminator, u._public_flags = modified
             # Signal to dispatch on_user_update
             return to_return, u
+        return None
 
     @property
     def status(self) -> Status:
@@ -612,6 +613,7 @@ class Member(disnake.abc.Messageable, _UserTag):
         """
         if self.activities:
             return self.activities[0]
+        return None
 
     def mentioned_in(self, message: Message) -> bool:
         """Whether the member is mentioned in the specified message.
@@ -930,6 +932,7 @@ class Member(disnake.abc.Messageable, _UserTag):
         if payload:
             data = await http.edit_member(guild_id, self.id, reason=reason, **payload)
             return Member(data=data, guild=self.guild, state=self._state)
+        return None
 
     async def request_to_speak(self) -> None:
         """|coro|
@@ -1154,5 +1157,4 @@ class Member(disnake.abc.Messageable, _UserTag):
         """
         if duration is not MISSING:
             return await self.guild.timeout(self, duration=duration, reason=reason)
-        else:
-            return await self.guild.timeout(self, until=until, reason=reason)
+        return await self.guild.timeout(self, until=until, reason=reason)

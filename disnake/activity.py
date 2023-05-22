@@ -103,6 +103,7 @@ class _BaseActivity:
             return datetime.datetime.fromtimestamp(
                 self._created_at / 1000, tz=datetime.timezone.utc
             )
+        return None
 
     @property
     def start(self) -> Optional[datetime.datetime]:
@@ -830,8 +831,7 @@ class CustomActivity(BaseActivity):
             if self.name:
                 return f"{self.emoji} {self.name}"
             return str(self.emoji)
-        else:
-            return str(self.name)
+        return str(self.name)
 
     def __repr__(self) -> str:
         return f"<CustomActivity name={self.name!r} emoji={self.emoji!r}>"

@@ -146,7 +146,7 @@ select = [
     "DTZ", # flake8-datetimez
     # "EM", # flake8-errmsg
     "G", # flake8-logging-format
-    # "RET", # flake8-return
+    "RET", # flake8-return
     # "SIM", # flake8-simplify
     "TID251", # flake8-tidy-imports, replaces S404
     # "TCH", # flake8-type-checking
@@ -179,6 +179,12 @@ ignore = [
 
     # ignore try-except-pass. Bare excepts are caught with E722
     "S110",
+
+    # we do explicitly return None even when its the only possible value as we are not fully typehinted
+    "RET501",
+
+    # ruff bug, too many false positives
+    "RET504", # unnecessary variaible assignment before return statement
 
     # provide specific codes on type: ignore
     "PGH003",

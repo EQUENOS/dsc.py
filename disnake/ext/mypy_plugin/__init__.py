@@ -36,7 +36,7 @@ def range_type_analyze_callback(ctx: AnalyzeTypeContext) -> Type:
         if name == "float":
             return ctx.api.named_type("builtins.float", [])
         # otherwise it should be an int; fail if it isn't
-        elif name != "int":
+        if name != "int":
             ctx.api.fail(f'"Range" parameters must be int or float, not {name}', ctx.context)
             return AnyType(TypeOfAny.from_error)
 

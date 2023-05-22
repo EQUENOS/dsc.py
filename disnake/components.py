@@ -684,21 +684,20 @@ def _component_factory(data: ComponentPayload, *, type: Type[C] = Component) -> 
     component_type = data["type"]
     if component_type == 1:
         return ActionRow(data)  # type: ignore
-    elif component_type == 2:
+    if component_type == 2:
         return Button(data)  # type: ignore
-    elif component_type == 3:
+    if component_type == 3:
         return StringSelectMenu(data)  # type: ignore
-    elif component_type == 4:
+    if component_type == 4:
         return TextInput(data)  # type: ignore
-    elif component_type == 5:
+    if component_type == 5:
         return UserSelectMenu(data)  # type: ignore
-    elif component_type == 6:
+    if component_type == 6:
         return RoleSelectMenu(data)  # type: ignore
-    elif component_type == 7:
+    if component_type == 7:
         return MentionableSelectMenu(data)  # type: ignore
-    elif component_type == 8:
+    if component_type == 8:
         return ChannelSelectMenu(data)  # type: ignore
-    else:
-        assert_never(component_type)
-        as_enum = try_enum(ComponentType, component_type)
-        return Component._raw_construct(type=as_enum)  # type: ignore
+    assert_never(component_type)
+    as_enum = try_enum(ComponentType, component_type)
+    return Component._raw_construct(type=as_enum)  # type: ignore

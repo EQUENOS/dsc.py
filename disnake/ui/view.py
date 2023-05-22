@@ -192,7 +192,7 @@ class View:
         while True:
             # Guard just in case someone changes the value of the timeout at runtime
             if self.timeout is None:
-                return
+                return None
 
             if self.__timeout_expiry is None:
                 return self._dispatch_timeout()
@@ -380,7 +380,7 @@ class View:
 
             allow = await self.interaction_check(interaction)
             if not allow:
-                return
+                return None
 
             await item.callback(interaction)
         except Exception as e:

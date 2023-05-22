@@ -165,6 +165,7 @@ class StringView:
                 return "".join(result)
 
             result.append(current)
+        return None
 
     def __repr__(self) -> str:
         return (

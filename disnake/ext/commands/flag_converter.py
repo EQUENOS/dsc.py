@@ -224,8 +224,7 @@ def get_flags(
         name = flag.name.casefold() if case_insensitive else flag.name
         if name in names:
             raise TypeError(f"{flag.name!r} flag conflicts with previous flag or alias.")
-        else:
-            names.add(name)
+        names.add(name)
 
         for alias in flag.aliases:
             # Validate alias is unique
@@ -234,8 +233,7 @@ def get_flags(
                 raise TypeError(
                     f"{flag.name!r} flag alias {alias!r} conflicts with previous flag or alias."
                 )
-            else:
-                names.add(alias)
+            names.add(alias)
 
         flags[flag.name] = flag
 
@@ -405,17 +403,16 @@ async def convert_flag(ctx: Context, argument: str, flag: Flag, annotation: Any 
         if origin is tuple:
             if args[-1] is Ellipsis:
                 return await tuple_convert_all(ctx, argument, flag, args[0])
-            else:
-                return await tuple_convert_flag(ctx, argument, flag, args)
-        elif origin is list:
+            return await tuple_convert_flag(ctx, argument, flag, args)
+        if origin is list:
             # typing.List[x]
             annotation = args[0]
             return await convert_flag(ctx, argument, flag, annotation)
-        elif origin is Union and args[-1] is type(None):
+        if origin is Union and args[-1] is type(None):
             # typing.Optional[x]
             annotation = Union[args[:-1]]  # type: ignore
             return await run_converters(ctx, annotation, argument, param)
-        elif origin is dict:
+        if origin is dict:
             # typing.Dict[K, V] -> typing.Tuple[K, V]
             return await tuple_convert_flag(ctx, argument, flag, args)
 
@@ -580,13 +577,12 @@ class FlagConverter(metaclass=FlagsMeta):
             except KeyError:
                 if flag.required:
                     raise MissingRequiredFlag(flag) from None
+                if callable(flag.default):
+                    default = await maybe_coroutine(flag.default, ctx)
+                    setattr(self, flag.attribute, default)
                 else:
-                    if callable(flag.default):
-                        default = await maybe_coroutine(flag.default, ctx)
-                        setattr(self, flag.attribute, default)
-                    else:
-                        setattr(self, flag.attribute, flag.default)
-                    continue
+                    setattr(self, flag.attribute, flag.default)
+                continue
 
             if flag.max_args > 0 and len(values) > flag.max_args:
                 if flag.override:

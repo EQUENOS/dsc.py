@@ -109,14 +109,13 @@ __all__ = (
 def issubclass_(obj: Any, tp: Union[TypeT, Tuple[TypeT, ...]]) -> TypeGuard[TypeT]:
     if not isinstance(tp, (type, tuple)):
         return False
-    elif not isinstance(obj, type):
+    if not isinstance(obj, type):
         # Assume we have a type hint
         if get_origin(obj) in (Union, UnionType, Optional):
             obj = get_args(obj)
             return any(isinstance(o, type) and issubclass(o, tp) for o in obj)
-        else:
-            # Other type hint specializations are not supported
-            return False
+        # Other type hint specializations are not supported
+        return False
     return issubclass(obj, tp)
 
 
@@ -173,11 +172,10 @@ def _xt_to_xe(xe: Optional[float], xt: Optional[float], direction: float = 1) ->
         if xt is not None:
             raise TypeError("Cannot combine lt and le or gt and le")
         return xe
-    elif xt is not None:
+    if xt is not None:
         epsilon = math.ldexp(1.0, -1024)
         return xt + (epsilon * direction)
-    else:
-        return None
+    return None
 
 
 class Injection(Generic[P, T_]):
@@ -231,8 +229,7 @@ class Injection(Generic[P, T_]):
         """
         if self._injected is not None:
             return self.function(self._injected, *args, **kwargs)  # type: ignore
-        else:
-            return self.function(*args, **kwargs)  # type: ignore
+        return self.function(*args, **kwargs)  # type: ignore
 
     @classmethod
     def register(
@@ -998,7 +995,7 @@ def format_kwargs(
         raise TypeError(
             "When calling a slash command only self and the interaction should be positional"
         )
-    elif first and not isinstance(first, commands.Cog):
+    if first and not isinstance(first, commands.Cog):
         raise TypeError("Method slash commands may be created only in cog subclasses")
 
     cog: Optional[commands.Cog] = first

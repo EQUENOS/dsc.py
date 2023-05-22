@@ -1712,6 +1712,7 @@ class InteractionMessage(Message):
             asyncio.create_task(inner_call())
         else:
             await self._state._interaction.delete_original_response()
+        return None
 
 
 class InteractionDataResolved(Dict[str, Any]):

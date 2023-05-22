@@ -208,9 +208,9 @@ class MemberConverter(IDConverter[disnake.Member]):
             username, _, discriminator = argument.rpartition("#")
             members = await guild.query_members(username, limit=100, cache=cache)
             return _utils_get(members, name=username, discriminator=discriminator)
-        else:
-            members = await guild.query_members(argument, limit=100, cache=cache)
-            return disnake.utils.find(lambda m: m.name == argument or m.nick == argument, members)
+
+        members = await guild.query_members(argument, limit=100, cache=cache)
+        return disnake.utils.find(lambda m: m.name == argument or m.nick == argument, members)
 
     async def query_member_by_id(
         self, bot: disnake.Client, guild: disnake.Guild, user_id: int
@@ -945,8 +945,7 @@ class PermissionsConverter(Converter[disnake.Permissions]):
 
         if callable(attr):
             return attr()
-        else:
-            return disnake.Permissions(**{name: True})
+        return disnake.Permissions(**{name: True})
 
 
 class GuildScheduledEventConverter(IDConverter[disnake.GuildScheduledEvent]):
@@ -1124,10 +1123,9 @@ def _convert_to_bool(argument: str) -> bool:
     lowered = argument.lower()
     if lowered in ("yes", "y", "true", "t", "1", "enable", "on"):
         return True
-    elif lowered in ("no", "n", "false", "f", "0", "disable", "off"):
+    if lowered in ("no", "n", "false", "f", "0", "disable", "off"):
         return False
-    else:
-        raise BadBoolArgument(lowered)
+    raise BadBoolArgument(lowered)
 
 
 def get_converter(param: inspect.Parameter) -> Any:
@@ -1191,9 +1189,8 @@ async def _actual_conversion(
         if isinstance(converter, type) and issubclass(converter, Converter):
             if inspect.ismethod(converter.convert):
                 return await converter.convert(ctx, argument)
-            else:
-                return await converter().convert(ctx, argument)
-        elif isinstance(converter, Converter):
+            return await converter().convert(ctx, argument)
+        if isinstance(converter, Converter):
             return await converter.convert(ctx, argument)  # type: ignore
     except CommandError:
         raise

@@ -361,9 +361,8 @@ class Attachment(Hashable):
             if seek_begin:
                 fp.seek(0)
             return written
-        else:
-            with open(fp, "wb") as f:
-                return f.write(data)
+        with open(fp, "wb") as f:
+            return f.write(data)
 
     async def read(self, *, use_cached: bool = False) -> bytes:
         """|coro|
@@ -1064,7 +1063,7 @@ class Message(Hashable):
                 break
         else:
             # didn't find anything so just return
-            return
+            return None
 
         del self.reactions[index]
         return reaction
@@ -1335,14 +1334,12 @@ class Message(Hashable):
         if self.type is MessageType.recipient_add:
             if self.channel.type is ChannelType.group:
                 return f"{self.author.name} added {self.mentions[0].name} to the group."
-            else:
-                return f"{self.author.name} added {self.mentions[0].name} to the thread."
+            return f"{self.author.name} added {self.mentions[0].name} to the thread."
 
         if self.type is MessageType.recipient_remove:
             if self.channel.type is ChannelType.group:
                 return f"{self.author.name} removed {self.mentions[0].name} from the group."
-            else:
-                return f"{self.author.name} removed {self.mentions[0].name} from the thread."
+            return f"{self.author.name} removed {self.mentions[0].name} from the thread."
 
         # MessageType.call cannot be read by bots.
 
@@ -1384,26 +1381,22 @@ class Message(Hashable):
         if self.type is MessageType.premium_guild_subscription:
             if not self.content:
                 return f"{self.author.name} just boosted the server!"
-            else:
-                return f"{self.author.name} just boosted the server **{self.content}** times!"
+            return f"{self.author.name} just boosted the server **{self.content}** times!"
 
         if self.type is MessageType.premium_guild_tier_1:
             if not self.content:
                 return f"{self.author.name} just boosted the server! {self.guild} has achieved **Level 1!**"
-            else:
-                return f"{self.author.name} just boosted the server **{self.content}** times! {self.guild} has achieved **Level 1!**"
+            return f"{self.author.name} just boosted the server **{self.content}** times! {self.guild} has achieved **Level 1!**"
 
         if self.type is MessageType.premium_guild_tier_2:
             if not self.content:
                 return f"{self.author.name} just boosted the server! {self.guild} has achieved **Level 2!**"
-            else:
-                return f"{self.author.name} just boosted the server **{self.content}** times! {self.guild} has achieved **Level 2!**"
+            return f"{self.author.name} just boosted the server **{self.content}** times! {self.guild} has achieved **Level 2!**"
 
         if self.type is MessageType.premium_guild_tier_3:
             if not self.content:
                 return f"{self.author.name} just boosted the server! {self.guild} has achieved **Level 3!**"
-            else:
-                return f"{self.author.name} just boosted the server **{self.content}** times! {self.guild} has achieved **Level 3!**"
+            return f"{self.author.name} just boosted the server **{self.content}** times! {self.guild} has achieved **Level 3!**"
 
         if self.type is MessageType.channel_follow_add:
             return f"{self.author.name} has added {self.content} to this channel. Its most important updates will show up here."
@@ -1451,7 +1444,7 @@ class Message(Hashable):
 
         if self.type is MessageType.role_subscription_purchase:
             if not (data := self.role_subscription_data):
-                return
+                return None
 
             guild_name = f"**{self.guild.name}**" if self.guild else None
             if data.total_months_subscribed > 0:
@@ -1461,10 +1454,11 @@ class Message(Hashable):
                     f"of {guild_name} for {data.total_months_subscribed} "
                     f"{'month' if data.total_months_subscribed == 1 else 'months'}!"
                 )
-            elif data.is_renewal:
+            if data.is_renewal:
                 return f"{self.author.name} renewed **{data.tier_name}** in their {guild_name} membership!"
-            else:
-                return f"{self.author.name} joined **{data.tier_name}** as a subscriber of {guild_name}!"
+            return (
+                f"{self.author.name} joined **{data.tier_name}** as a subscriber of {guild_name}!"
+            )
 
         if self.type is MessageType.interaction_premium_upsell:
             return self.content

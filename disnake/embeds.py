@@ -830,9 +830,8 @@ class Embed:
                 raise TypeError("File must have a filename")
             self._files[key] = file
             return f"attachment://{file.filename}"
-        else:
-            self._files.pop(key, None)
-            return str(url) if url is not None else None
+        self._files.pop(key, None)
+        return str(url) if url is not None else None
 
     def check_limits(self) -> None:
         """Checks if this embed fits within the limits dictated by Discord.
