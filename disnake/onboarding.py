@@ -93,7 +93,7 @@ class OnboardingPrompt(Hashable):
     required: :class:`bool`
         Whether the prompt is required before a user completes the onboarding flow.
     in_onboarding: :class:`bool`
-        Whether the prompt is present in the onboarding flow.
+        Whether the prompt is present in the initial onboarding flow.
         If ``False``, the prompt will only appear in community customization.
     """
 

@@ -24,6 +24,7 @@ from .guild import (
 from .guild_scheduled_event import GuildScheduledEvent
 from .integration import IntegrationExpireBehavior, PartialIntegration
 from .interactions import ApplicationCommand, ApplicationCommandPermissions
+from .onboarding import OnboardingPrompt, OnboardingPromptOption
 from .role import Role
 from .snowflake import Snowflake
 from .threads import Thread
@@ -83,6 +84,11 @@ AuditLogEvent = Literal[
     141,
     142,
     143,
+    144,
+    145,
+    163,
+    164,
+    167,
 ]
 
 
@@ -98,6 +104,7 @@ class _AuditLogChange_Str(TypedDict):
         "deny",
         "permissions",
         "tags",
+        "title",
     ]
     new_value: str
     old_value: str
@@ -152,6 +159,9 @@ class _AuditLogChange_Bool(TypedDict):
         "locked",
         "premium_progress_bar_enabled",
         "enabled",
+        "single_select",
+        "required",
+        "in_onboarding",
     ]
     new_value: bool
     old_value: bool
@@ -176,7 +186,7 @@ class _AuditLogChange_Int(TypedDict):
 
 
 class _AuditLogChange_ListSnowflake(TypedDict):
-    key: Literal["exempt_roles", "exempt_channels"]
+    key: Literal["exempt_roles", "exempt_channels", "default_channel_ids"]
     new_value: List[Snowflake]
     old_value: List[Snowflake]
 
@@ -271,6 +281,18 @@ class _AuditLogChange_AutoModTriggerMetadata(TypedDict):
     old_value: AutoModTriggerMetadata
 
 
+class _AuditLogChange_OnboardingPrompts(TypedDict):
+    key: Literal["prompts"]
+    new_value: List[OnboardingPrompt]
+    old_value: List[OnboardingPrompt]
+
+
+class _AuditLogChange_OnboardingPromptOptions(TypedDict):
+    key: Literal["options"]
+    new_value: List[OnboardingPromptOption]
+    old_value: List[OnboardingPromptOption]
+
+
 AuditLogChange = Union[
     _AuditLogChange_Str,
     _AuditLogChange_AssetHash,
@@ -293,6 +315,8 @@ AuditLogChange = Union[
     _AuditLogChange_AutoModEventType,
     _AuditLogChange_AutoModActions,
     _AuditLogChange_AutoModTriggerMetadata,
+    _AuditLogChange_OnboardingPrompts,
+    _AuditLogChange_OnboardingPromptOptions,
 ]
 
 
