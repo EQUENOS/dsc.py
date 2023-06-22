@@ -33,5 +33,6 @@ coverage.xml
 __pypackages__/
 .pdm.toml
 pdm.lock
+disnake/_version.py
 
 !test_bot/locale/*.json

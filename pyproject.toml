@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 
 [build-system]
-requires = ["pdm-backend>=2.0"]
+requires = ["pdm-backend", "packaging"]
 build-backend = "pdm.backend"
 
 [project]
@@ -123,8 +123,7 @@ includes = [
 ]
 
 [tool.pdm.version]
-source = "file"
-path = "disnake/__init__.py"
+source = "scm"
 
 [tool.black]
 line-length = 100
