@@ -59,6 +59,7 @@ docs = [
     "sphinxcontrib-towncrier==0.3.2a0",
     "towncrier==23.6.0",
     "sphinx-notfound-page==0.8.3",
+    "sphinxext-opengraph==0.7.5"
 ]
 discord = ["discord-disnake"]
 

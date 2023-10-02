@@ -47,6 +47,7 @@ extensions = [
     "sphinxcontrib.towncrier.ext",
     "hoverxref.extension",
     "notfound.extension",
+    "sphinxext.opengraph",
     "redirects",
     "fulltoc",
     "exception_hierarchy",
@@ -274,6 +275,16 @@ if _IS_READTHEDOCS:
 
     # enable opensearch (see description somewhere below)
     html_use_opensearch = html_baseurl.rstrip("/")
+
+
+# ogp_site_url = ""  # automatically set on readthedocs
+ogp_site_name = "disnake documentation"
+ogp_image = "https://disnake.dev/assets/disnake-logo-transparent.png"
+ogp_image_alt = "disnake icon"
+ogp_custom_meta_tags = [
+    '<meta property="og:image:width" content="64" />',
+    '<meta property="og:image:height" content="64" />',
+]
 
 
 # -- Options for HTML output ----------------------------------------------

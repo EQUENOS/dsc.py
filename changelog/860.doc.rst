@@ -1,0 +1,1 @@
+Add `OpenGraph <https://ogp.me/>`_ tags to all pages.
