@@ -725,6 +725,7 @@ class HTTPClient:
         emoji: str,
         limit: int,
         after: Optional[Snowflake] = None,
+        type: int = 0,
     ) -> Response[List[user.User]]:
         r = Route(
             "GET",
@@ -736,6 +737,7 @@ class HTTPClient:
 
         params: Dict[str, Any] = {
             "limit": limit,
+            "type": type,
         }
         if after:
             params["after"] = after

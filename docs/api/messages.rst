@@ -30,6 +30,14 @@ Reaction
     .. automethod:: users
         :async-for:
 
+BurstReaction
+~~~~~~~~~~~~~~
+
+.. attributetable:: BurstReaction
+
+.. autoclass:: BurstReaction()
+    :members:
+
 Attachment
 ~~~~~~~~~~
 

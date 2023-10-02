@@ -2,11 +2,15 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import TYPE_CHECKING, Any, List, Optional, Union
 
+from .colour import Colour
 from .iterators import ReactionIterator
 
-__all__ = ("Reaction",)
+__all__ = (
+    "Reaction",
+    "BurstReaction",
+)
 
 if TYPE_CHECKING:
     from .abc import Snowflake
@@ -47,7 +51,7 @@ class Reaction:
     emoji: Union[:class:`Emoji`, :class:`PartialEmoji`, :class:`str`]
         The reaction emoji. May be a custom emoji, or a unicode emoji.
     count: :class:`int`
-        Number of times this reaction was made
+        Number of times this reaction was made.
     me: :class:`bool`
         If the user sent this reaction.
     message: :class:`Message`
@@ -68,7 +72,7 @@ class Reaction:
         self.emoji: Union[PartialEmoji, Emoji, str] = emoji or message._state._get_emoji_from_data(  # type: ignore
             data["emoji"]
         )
-        self.count: int = data.get("count", 1)
+        self.count: int = data["count_details"].get("normal", 1)
         self.me: bool = data["me"]
 
     # TODO: typeguard
@@ -201,4 +205,75 @@ class Reaction:
         if limit is None:
             limit = self.count
 
-        return ReactionIterator(self.message, emoji, limit, after)
+        return ReactionIterator(
+            self.message, emoji, limit, after, type=1 if isinstance(self, BurstReaction) else 0
+        )
+
+
+class BurstReaction(Reaction):
+    """Represents a Super reaction to a message.
+
+    .. versionadded:: 2.10
+
+    This class is a subclass of :class:`.Reaction`.
+
+    Depending on the way this object was created, some of the attributes can
+    have a value of ``None``.
+
+    .. container:: operations
+
+        .. describe:: x == y
+
+            Checks if two Super reactions are equal. This works by checking if the
+            emoji is the same. So two messages with the same reaction will be
+            considered "equal".
+
+        .. describe:: x != y
+
+            Checks if two Super reactions are not equal.
+
+        .. describe:: hash(x)
+
+            Returns the Super reaction's hash.
+
+        .. describe:: str(x)
+
+            Returns the string form of the Super reaction's emoji.
+
+    Attributes
+    ----------
+    emoji: Union[:class:`Emoji`, :class:`PartialEmoji`, :class:`str`]
+        The Super reaction emoji. May be a custom emoji, or a unicode emoji.
+    count: :class:`int`
+        Number of times this Super reaction was made.
+    me: :class:`bool`
+        If the user sent this Super reaction.
+    message: :class:`Message`
+        The message this Super reaction belongs to.
+    colors: List[:class:`Colour`]
+        The list of :class:`Colour` used for Super reaction.
+    """
+
+    __slots__ = (
+        "_raw_colors",
+        "burst_colors",
+    )
+
+    def __init__(
+        self,
+        *,
+        message: Message,
+        data: ReactionPayload,
+        emoji: Optional[Union[PartialEmoji, Emoji, str]] = None,
+    ) -> None:
+        super().__init__(message=message, data=data, emoji=emoji)
+        self.count: int = data["count_details"].get("burst", 1)
+        self.me: bool = data["me_burst"]
+        self._raw_colors: List[str] = data.get("burst_colors", [])
+
+    def __repr__(self) -> str:
+        return f"<BurstReaction emoji={self.emoji!r} me={self.me} count={self.count}>"
+
+    @property
+    def colors(self) -> List[Colour]:
+        return [Colour(int(c.lstrip("#"), base=16)) for c in self._raw_colors]

@@ -172,7 +172,7 @@ class _FilteredAsyncIterator(_AsyncIterator[T]):
 
 
 class ReactionIterator(_AsyncIterator[Union["User", "Member"]]):
-    def __init__(self, message, emoji, limit: int = 100, after=None) -> None:
+    def __init__(self, message, emoji, limit: int = 100, after=None, type: int = 0) -> None:
         self.message = message
         self.limit = limit
         self.after = after
@@ -183,6 +183,7 @@ class ReactionIterator(_AsyncIterator[Union["User", "Member"]]):
         self.guild = message.guild
         self.channel_id = message.channel.id
         self.users = asyncio.Queue()
+        self.type = type
 
     async def next(self) -> Union[User, Member]:
         if self.users.empty():
@@ -199,7 +200,7 @@ class ReactionIterator(_AsyncIterator[Union["User", "Member"]]):
 
             after = self.after.id if self.after else None
             data: List[PartialUserPayload] = await self.getter(
-                self.channel_id, self.message.id, self.emoji, retrieve, after=after
+                self.channel_id, self.message.id, self.emoji, retrieve, after=after, type=self.type
             )
 
             if data:

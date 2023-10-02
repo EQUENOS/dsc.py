@@ -34,7 +34,7 @@ from .guild import Guild
 from .member import Member
 from .mixins import Hashable
 from .partial_emoji import PartialEmoji
-from .reaction import Reaction
+from .reaction import BurstReaction, Reaction
 from .sticker import StickerItem
 from .threads import Thread
 from .ui.action_row import components_to_dict
@@ -863,8 +863,12 @@ class Message(Hashable):
 
         .. versionadded:: 1.3
 
-    reactions : List[:class:`Reaction`]
+    reactions : List[Union[:class:`Reaction`, :class:`BurstReaction`]]
         Reactions to a message. Reactions can be either custom emoji or standard unicode emoji.
+
+        .. versionadded:: 2.10
+            This list also can be populated with :class:`BurstReaction`.
+
     activity: Optional[:class:`dict`]
         The activity associated with this message. Sent with Rich-Presence related messages that for
         example, request joining, spectating, or listening to or with another member.
@@ -954,9 +958,12 @@ class Message(Hashable):
         self.id: int = int(data["id"])
         self.application_id: Optional[int] = utils._get_as_snowflake(data, "application_id")
         self.webhook_id: Optional[int] = utils._get_as_snowflake(data, "webhook_id")
-        self.reactions: List[Reaction] = [
-            Reaction(message=self, data=d) for d in data.get("reactions", [])
-        ]
+        self.reactions: List[Union[Reaction, BurstReaction]] = []
+        for d in data.get("reactions", []):
+            if d["count_details"]["burst"] > 0:
+                self.reactions.append(BurstReaction(message=self, data=d))
+            if d["count_details"]["normal"] > 0:
+                self.reactions.append(Reaction(message=self, data=d))
         self.attachments: List[Attachment] = [
             Attachment(data=a, state=self._state) for a in data["attachments"]
         ]
@@ -1058,10 +1065,20 @@ class Message(Hashable):
         if reaction is None:
             reaction_data: ReactionPayload = {
                 "count": 1,
-                "me": is_me,
+                "me": bool(is_me and not data["burst"]),
+                "me_burst": bool(is_me and data["burst"]),
                 "emoji": data["emoji"],
+                "count_details": {
+                    "normal": 1 if not data["burst"] else 0,
+                    "burst": 1 if data["burst"] else 0,
+                },
+                "burst_count": 1 if data["burst"] else 0,
+                "burst_colors": data.get("burst_colors", []),
             }
-            reaction = Reaction(message=self, data=reaction_data, emoji=emoji)
+            if data["burst"]:
+                reaction = BurstReaction(message=self, data=reaction_data, emoji=emoji)
+            else:
+                reaction = Reaction(message=self, data=reaction_data, emoji=emoji)
             self.reactions.append(reaction)
         else:
             reaction.count += 1

@@ -1,0 +1,3 @@
+Implement Super reactions.
+    - Add :class:`BurstReaction` for Super reactions.
+    - Add ``type`` parameter to :meth:`HTTPClient.get_reaction_users`.

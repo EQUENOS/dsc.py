@@ -294,6 +294,7 @@ class _BaseReactionEvent(TypedDict):
     message_id: Snowflake
     guild_id: NotRequired[Snowflake]
     emoji: PartialEmoji
+    burst: bool
 
 
 # https://discord.com/developers/docs/topics/gateway-events#message-reaction-add
@@ -319,6 +320,7 @@ class MessageReactionRemoveEmojiEvent(TypedDict):
     guild_id: NotRequired[Snowflake]
     message_id: Snowflake
     emoji: PartialEmoji
+    burst: bool
 
 
 # https://discord.com/developers/docs/topics/gateway-events#interaction-create
