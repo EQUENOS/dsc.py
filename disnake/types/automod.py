@@ -8,9 +8,9 @@ from typing_extensions import NotRequired
 
 from .snowflake import Snowflake, SnowflakeList
 
-AutoModTriggerType = Literal[1, 2, 3, 4, 5]
-AutoModEventType = Literal[1]
-AutoModActionType = Literal[1, 2]
+AutoModTriggerType = Literal[1, 2, 3, 4, 5, 6]
+AutoModEventType = Literal[1, 2]
+AutoModActionType = Literal[1, 2, 3, 4]
 AutoModPresetType = Literal[1, 2, 3]
 
 
@@ -26,10 +26,15 @@ class AutoModTimeoutActionMetadata(TypedDict):
     duration_seconds: int
 
 
+class AutoModBlockInteractionActionMetadata(TypedDict):
+    ...  # currently empty
+
+
 AutoModActionMetadata = Union[
     AutoModBlockMessageActionMetadata,
     AutoModSendAlertActionMetadata,
     AutoModTimeoutActionMetadata,
+    AutoModBlockInteractionActionMetadata,
 ]
 
 

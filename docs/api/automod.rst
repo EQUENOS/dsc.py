@@ -77,6 +77,14 @@ AutoModTimeoutAction
 .. autoclass:: AutoModTimeoutAction
     :members:
 
+AutoModBlockInteractionAction
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. attributetable:: AutoModBlockInteractionAction
+
+.. autoclass:: AutoModBlockInteractionAction
+    :members:
+
 Enumerations
 ------------
 
@@ -86,6 +94,19 @@ AutoModActionType
 .. class:: AutoModActionType
 
     Represents the type of action an auto moderation rule will take upon execution.
+
+    .. _automod_trigger_action_table:
+
+    Based on the trigger type, different action types can be used:
+
+    .. csv-table::
+        :header: "Trigger Type", ``block_message``, ``send_alert_message``, ``timeout``, ``block_member_interaction``
+
+        :attr:`~AutoModTriggerType.keyword`,        ✅, ✅, ✅, ❌
+        :attr:`~AutoModTriggerType.spam`,           ✅, ✅, ❌, ❌
+        :attr:`~AutoModTriggerType.keyword_preset`, ✅, ✅, ❌, ❌
+        :attr:`~AutoModTriggerType.mention_spam`,   ✅, ✅, ✅, ❌
+        :attr:`~AutoModTriggerType.member_profile`, ❌, ✅, ❌, ✅
 
     .. versionadded:: 2.6
 
@@ -102,9 +123,13 @@ AutoModActionType
         The rule will timeout the user that sent the message.
 
         .. note::
-            This action type is only available for rules with trigger type
-            :attr:`~AutoModTriggerType.keyword` or :attr:`~AutoModTriggerType.mention_spam`,
-            and :attr:`~Permissions.moderate_members` permissions are required to use it.
+            Configuring this action type requires :attr:`~Permissions.moderate_members` permissions.
+
+    .. attribute:: block_member_interaction
+
+        The rule will prevent the user from using text, voice, or other interactions.
+
+        .. versionadded:: 2.10
 
 AutoModEventType
 ~~~~~~~~~~~~~~~~
@@ -113,11 +138,30 @@ AutoModEventType
 
     Represents the type of event/context an auto moderation rule will be checked in.
 
+    .. _automod_trigger_event_table:
+
+    Based on the trigger type, different event types are used:
+
+    .. csv-table::
+        :header: "Trigger Type", ``message_send``, ``member_update``
+
+        :attr:`~AutoModTriggerType.keyword`,        ✅, ❌
+        :attr:`~AutoModTriggerType.spam`,           ✅, ❌
+        :attr:`~AutoModTriggerType.keyword_preset`, ✅, ❌
+        :attr:`~AutoModTriggerType.mention_spam`,   ✅, ❌
+        :attr:`~AutoModTriggerType.member_profile`, ❌, ✅
+
     .. versionadded:: 2.6
 
     .. attribute:: message_send
 
         The rule will apply when a member sends or edits a message in the guild.
+
+    .. attribute:: member_update
+
+        The rule will apply when a member joins or edits their profile.
+
+        .. versionadded:: 2.10
 
 AutoModTriggerType
 ~~~~~~~~~~~~~~~~~~
@@ -125,6 +169,9 @@ AutoModTriggerType
 .. class:: AutoModTriggerType
 
     Represents the type of content that can trigger an auto moderation rule.
+
+    Trigger types only work with specific event types,
+    refer to :ref:`this table <automod_trigger_event_table>` for more.
 
     .. versionadded:: 2.6
 
@@ -150,6 +197,12 @@ AutoModTriggerType
     .. attribute:: mention_spam
 
         The rule will filter messages based on the number of member/role mentions they contain.
+
+        This trigger type requires additional :class:`metadata <AutoModTriggerMetadata>`.
+
+    .. attribute:: member_profile
+
+        The rule will filter member profiles based on a custom keyword list.
 
         This trigger type requires additional :class:`metadata <AutoModTriggerMetadata>`.
 
