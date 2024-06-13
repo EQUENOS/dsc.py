@@ -399,8 +399,8 @@ class BotBase(CommonBotBase, GroupMixin):
 
     # extensions
 
-    def _remove_module_references(self, name: str) -> None:
-        super()._remove_module_references(name)
+    async def _remove_module_references(self, name: str) -> None:
+        await super()._remove_module_references(name)
         # remove all the commands from the module
         for cmd in self.all_commands.copy().values():
             if cmd.module and _is_submodule(name, cmd.module):

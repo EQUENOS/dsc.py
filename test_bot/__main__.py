@@ -52,9 +52,12 @@ class TestBot(commands.Bot):
         )
         # fmt: on
 
-    def add_cog(self, cog: commands.Cog, *, override: bool = False) -> None:
+    async def setup_hook(self) -> None:
+        await self.load_extensions(os.path.join(__package__, Config.cogs_folder))
+
+    async def add_cog(self, cog: commands.Cog, *, override: bool = False) -> None:
         logger.info("Loading cog %s", cog.qualified_name)
-        return super().add_cog(cog, override=override)
+        return await super().add_cog(cog, override=override)
 
     async def _handle_error(
         self, ctx: Union[commands.Context, disnake.AppCommandInter], error: Exception, prefix: str
@@ -98,5 +101,4 @@ print(f"disnake: {disnake.__version__}\n")
 
 if __name__ == "__main__":
     bot = TestBot()
-    bot.load_extensions(os.path.join(__package__, Config.cogs_folder))
     bot.run(Config.token)

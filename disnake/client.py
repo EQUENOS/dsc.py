@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import signal
 import sys
 import traceback
 import types
@@ -82,7 +81,7 @@ from .webhook import Webhook
 from .widget import Widget
 
 if TYPE_CHECKING:
-    from typing_extensions import NotRequired
+    from typing_extensions import Never, NotRequired
 
     from .abc import GuildChannel, PrivateChannel, Snowflake, SnowflakeTime
     from .app_commands import APIApplicationCommand, MessageCommand, SlashCommand, UserCommand
@@ -111,41 +110,6 @@ CoroFunc = Callable[..., Coro[Any]]
 CoroT = TypeVar("CoroT", bound=Callable[..., Coroutine[Any, Any, Any]])
 
 _log = logging.getLogger(__name__)
-
-
-def _cancel_tasks(loop: asyncio.AbstractEventLoop) -> None:
-    tasks = {t for t in asyncio.all_tasks(loop=loop) if not t.done()}
-
-    if not tasks:
-        return
-
-    _log.info("Cleaning up after %d tasks.", len(tasks))
-    for task in tasks:
-        task.cancel()
-
-    loop.run_until_complete(asyncio.gather(*tasks, return_exceptions=True))
-    _log.info("All tasks finished cancelling.")
-
-    for task in tasks:
-        if task.cancelled():
-            continue
-        if task.exception() is not None:
-            loop.call_exception_handler(
-                {
-                    "message": "Unhandled exception during Client.run shutdown.",
-                    "exception": task.exception(),
-                    "task": task,
-                }
-            )
-
-
-def _cleanup_loop(loop: asyncio.AbstractEventLoop) -> None:
-    try:
-        _cancel_tasks(loop)
-        loop.run_until_complete(loop.shutdown_asyncgens())
-    finally:
-        _log.info("Closing the event loop.")
-        loop.close()
 
 
 class SessionStartLimit:
@@ -237,13 +201,6 @@ class Client:
 
         .. versionchanged:: 1.3
             Allow disabling the message cache and change the default size to ``1000``.
-    loop: Optional[:class:`asyncio.AbstractEventLoop`]
-        The :class:`asyncio.AbstractEventLoop` to use for asynchronous operations.
-        Defaults to ``None``, in which case the default event loop is used via
-        :func:`asyncio.get_event_loop()`.
-    asyncio_debug: :class:`bool`
-        Whether to enable asyncio debugging when the client starts.
-        Defaults to False.
     connector: Optional[:class:`aiohttp.BaseConnector`]
         The connector to use for connection pooling.
     proxy: Optional[:class:`str`]
@@ -361,8 +318,6 @@ class Client:
     ----------
     ws
         The websocket gateway the client is currently connected to. Could be ``None``.
-    loop: :class:`asyncio.AbstractEventLoop`
-        The event loop that the client uses for asynchronous operations.
     session_start_limit: Optional[:class:`SessionStartLimit`]
         Information about the current session start limit.
         Only available after initiating the connection.
@@ -378,8 +333,6 @@ class Client:
     def __init__(
         self,
         *,
-        asyncio_debug: bool = False,
-        loop: Optional[asyncio.AbstractEventLoop] = None,
         shard_id: Optional[int] = None,
         shard_count: Optional[int] = None,
         enable_debug_events: bool = False,
@@ -405,23 +358,27 @@ class Client:
         # self.ws is set in the connect method
         self.ws: DiscordWebSocket = None  # type: ignore
 
-        if loop is None:
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore", DeprecationWarning)
-                self.loop: asyncio.AbstractEventLoop = asyncio.get_event_loop()
-        else:
-            self.loop: asyncio.AbstractEventLoop = loop
-
-        self.loop.set_debug(asyncio_debug)
         self._listeners: Dict[str, List[Tuple[asyncio.Future, Callable[..., bool]]]] = {}
         self.session_start_limit: Optional[SessionStartLimit] = None
+
+        if connector:
+            try:
+                asyncio.get_running_loop()
+            except RuntimeError:
+                raise RuntimeError(
+                    (
+                        "`connector` was created outside of an asyncio loop, which will likely cause"
+                        "issues later down the line due to the client and `connector` running on"
+                        "different asyncio loops; consider moving client instantiation to an '`async"
+                        "main`' function and then manually asyncio.run it"
+                    )
+                ) from None
 
         self.http: HTTPClient = HTTPClient(
             connector,
             proxy=proxy,
             proxy_auth=proxy_auth,
             unsync_clock=assume_unsync_clock,
-            loop=self.loop,
         )
 
         self._handlers: Dict[str, Callable] = {
@@ -504,7 +461,6 @@ class Client:
             handlers=self._handlers,
             hooks=self._hooks,
             http=self.http,
-            loop=self.loop,
             max_messages=max_messages,
             application_id=application_id,
             heartbeat_timeout=heartbeat_timeout,
@@ -524,6 +480,28 @@ class Client:
         if self._first_connect.is_set():
             return
         self._first_connect.set()
+
+    @property
+    def loop(self):
+        """:class:`asyncio.AbstractEventLoop`: Same as :func:`asyncio.get_running_loop`.
+
+        .. deprecated:: 3.0
+            Use :func:`asyncio.get_running_loop` directly.
+        """
+        warnings.warn(
+            "Accessing `Client.loop` is deprecated. Use `asyncio.get_running_loop()` instead.",
+            category=DeprecationWarning,
+            stacklevel=2,
+        )
+        return asyncio.get_running_loop()
+
+    @loop.setter
+    def loop(self, _value: Never) -> None:
+        warnings.warn(
+            "Setting `Client.loop` is deprecated and has no effect. Use `asyncio.get_running_loop()` instead.",
+            category=DeprecationWarning,
+            stacklevel=2,
+        )
 
     @property
     def latency(self) -> float:
@@ -1015,12 +993,34 @@ class Client:
         if not initial:
             await asyncio.sleep(5.0)
 
+    async def setup_hook(self) -> None:
+        """A hook that allows you to perform asynchronous setup like
+        initiating database connections or loading cogs/extensions after
+        the bot is logged in but before it has connected to the websocket.
+
+        This is only called once, in :meth:`.login`, before any events are
+        dispatched, making it a better solution than doing such setup in
+        the :func:`disnake.on_ready` event.
+
+        .. warning::
+            Since this is called *before* the websocket connection is made,
+            anything that waits for the websocket will deadlock, which includes
+            methods like :meth:`.wait_for`, :meth:`.wait_until_ready`
+            and :meth:`.wait_until_first_connect`.
+
+        .. versionadded:: 3.0
+        """
+
     # login state management
 
     async def login(self, token: str) -> None:
         """|coro|
 
-        Logs in the client with the specified credentials.
+        Logs in the client with the specified credentials and calls
+        :meth:`.setup_hook`.
+
+        .. versionchanged:: 3.0
+            Now also calls :meth:`.setup_hook`.
 
         Parameters
         ----------
@@ -1043,6 +1043,8 @@ class Client:
 
         data = await self.http.static_login(token.strip())
         self._connection.user = ClientUser(state=self._connection, data=data)
+
+        await self.setup_hook()
 
     async def connect(
         self, *, reconnect: bool = True, ignore_session_start_limit: bool = False
@@ -1245,10 +1247,14 @@ class Client:
         TypeError
             An unexpected keyword argument was received.
         """
-        await self.login(token)
-        await self.connect(
-            reconnect=reconnect, ignore_session_start_limit=ignore_session_start_limit
-        )
+        try:
+            await self.login(token)
+            await self.connect(
+                reconnect=reconnect, ignore_session_start_limit=ignore_session_start_limit
+            )
+        finally:
+            if not self.is_closed():
+                await self.close()
 
     def run(self, *args: Any, **kwargs: Any) -> None:
         """A blocking call that abstracts away the event loop
@@ -1258,57 +1264,26 @@ class Client:
         function should not be used. Use :meth:`start` coroutine
         or :meth:`connect` + :meth:`login`.
 
-        Roughly Equivalent to: ::
+        Equivalent to: ::
 
             try:
-                loop.run_until_complete(start(*args, **kwargs))
+                asyncio.run(start(*args, **kwargs))
             except KeyboardInterrupt:
-                loop.run_until_complete(close())
-                # cancel all tasks lingering
-            finally:
-                loop.close()
+                return
 
         .. warning::
 
             This function must be the last function to call due to the fact that it
             is blocking. That means that registration of events or anything being
             called after this function call will not execute until it returns.
+
+        .. versionchanged:: 3.0
+            Changed to use :func:`asyncio.run`, instead of custom logic.
         """
-        loop = self.loop
-
         try:
-            loop.add_signal_handler(signal.SIGINT, lambda: loop.stop())
-            loop.add_signal_handler(signal.SIGTERM, lambda: loop.stop())
-        except NotImplementedError:
-            pass
-
-        async def runner() -> None:
-            try:
-                await self.start(*args, **kwargs)
-            finally:
-                if not self.is_closed():
-                    await self.close()
-
-        def stop_loop_on_completion(f) -> None:
-            loop.stop()
-
-        future = asyncio.ensure_future(runner(), loop=loop)
-        future.add_done_callback(stop_loop_on_completion)
-        try:
-            loop.run_forever()
+            asyncio.run(self.start(*args, **kwargs))
         except KeyboardInterrupt:
-            _log.info("Received signal to terminate bot and event loop.")
-        finally:
-            future.remove_done_callback(stop_loop_on_completion)
-            _log.info("Cleaning up tasks.")
-            _cleanup_loop(loop)
-
-        if not future.cancelled():
-            try:
-                return future.result()
-            except KeyboardInterrupt:
-                # I am unsure why this gets raised here but suppress it anyway
-                return None
+            return
 
     # properties
 
@@ -1798,7 +1773,7 @@ class Client:
             arguments that mirrors the parameters passed in the
             :ref:`event <disnake_api_events>`.
         """
-        future = self.loop.create_future()
+        future = asyncio.get_running_loop().create_future()
         if check is None:
 
             def _check(*args) -> bool:

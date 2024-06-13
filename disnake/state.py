@@ -115,14 +115,12 @@ class ChunkRequest:
     def __init__(
         self,
         guild_id: int,
-        loop: asyncio.AbstractEventLoop,
         resolver: Callable[[int], Any],
         *,
         cache: bool = True,
     ) -> None:
         self.guild_id: int = guild_id
         self.resolver: Callable[[int], Any] = resolver
-        self.loop: asyncio.AbstractEventLoop = loop
         self.cache: bool = cache
         self.nonce: str = os.urandom(16).hex()
         self.buffer: List[Member] = []
@@ -141,7 +139,7 @@ class ChunkRequest:
                     guild._add_member(member)
 
     async def wait(self) -> List[Member]:
-        future = self.loop.create_future()
+        future = asyncio.get_running_loop().create_future()
         self.waiters.append(future)
         try:
             return await future
@@ -149,7 +147,7 @@ class ChunkRequest:
             self.waiters.remove(future)
 
     def get_future(self) -> asyncio.Future[List[Member]]:
-        future = self.loop.create_future()
+        future = asyncio.get_running_loop().create_future()
         self.waiters.append(future)
         return future
 
@@ -193,7 +191,6 @@ class ConnectionState:
         handlers: Dict[str, Callable],
         hooks: Dict[str, Callable],
         http: HTTPClient,
-        loop: asyncio.AbstractEventLoop,
         max_messages: Optional[int] = 1000,
         application_id: Optional[int] = None,
         heartbeat_timeout: float = 60.0,
@@ -205,7 +202,6 @@ class ConnectionState:
         chunk_guilds_at_startup: Optional[bool] = None,
         member_cache_flags: Optional[MemberCacheFlags] = None,
     ) -> None:
-        self.loop: asyncio.AbstractEventLoop = loop
         self.http: HTTPClient = http
         self.max_messages: Optional[int] = max_messages
         if self.max_messages is not None and self.max_messages <= 0:
@@ -639,7 +635,7 @@ class ConnectionState:
         guild_id = guild.id
         ws = self._get_websocket(guild_id)
 
-        request = ChunkRequest(guild.id, self.loop, self._get_guild, cache=cache)
+        request = ChunkRequest(guild.id, self._get_guild, cache=cache)
         self._chunk_requests[request.nonce] = request
 
         try:
@@ -1392,7 +1388,7 @@ class ConnectionState:
         request = self._chunk_requests.get(guild.id)
         if request is None:
             self._chunk_requests[guild.id] = request = ChunkRequest(
-                guild.id, self.loop, self._get_guild, cache=cache
+                guild.id, self._get_guild, cache=cache
             )
             await self.chunker(guild.id, nonce=request.nonce)
 
@@ -2237,7 +2233,7 @@ class AutoShardedConnectionState(ConnectionState):
                     future = asyncio.ensure_future(self.chunk_guild(guild))
                     current_bucket.append(future)
                 else:
-                    future = self.loop.create_future()
+                    future = asyncio.get_running_loop().create_future()
                     future.set_result([])
 
                 processed.append((guild, future))

@@ -476,17 +476,21 @@ class Cog(metaclass=CogMeta):
 
     @_cog_special_method
     async def cog_load(self) -> None:
-        """A special method that is called as a task when the cog is added."""
+        """A special method that is called when the cog is added.
+
+        .. versionchanged:: 3.0
+            This is now ``await``\\ed directly instead of being scheduled as a task.
+
+            This is now run when the cog has fully finished loading.
+        """
         pass
 
     @_cog_special_method
-    def cog_unload(self) -> None:
+    async def cog_unload(self) -> None:
         """A special method that is called when the cog gets removed.
 
-        This function **cannot** be a coroutine. It must be a regular
-        function.
-
-        Subclasses must replace this if they want special unloading behaviour.
+        .. versionchanged:: 3.0
+            This can now be a coroutine.
         """
         pass
 
@@ -724,7 +728,7 @@ class Cog(metaclass=CogMeta):
         """Similar to :meth:`cog_after_slash_command_invoke` but for message commands."""
         pass
 
-    def _inject(self, bot: AnyBot) -> Self:
+    async def _inject(self, bot: AnyBot) -> Self:
         from .bot import AutoShardedInteractionBot, InteractionBot
 
         cls = self.__class__
@@ -770,9 +774,6 @@ class Cog(metaclass=CogMeta):
                     elif isinstance(to_undo, InvokableMessageCommand):
                         bot.remove_message_command(to_undo.name)
                 raise
-
-        if not hasattr(self.cog_load.__func__, "__cog_special_method__"):
-            bot.loop.create_task(disnake.utils.maybe_coroutine(self.cog_load))
 
         # check if we're overriding the default
         if cls.bot_check is not Cog.bot_check:
@@ -830,9 +831,12 @@ class Cog(metaclass=CogMeta):
         except NotImplementedError:
             pass
 
+        if not hasattr(self.cog_load.__func__, "__cog_special_method__"):
+            await disnake.utils.maybe_coroutine(self.cog_load)
+
         return self
 
-    def _eject(self, bot: AnyBot) -> None:
+    async def _eject(self, bot: AnyBot) -> None:
         cls = self.__class__
 
         try:
@@ -896,7 +900,7 @@ class Cog(metaclass=CogMeta):
             except NotImplementedError:
                 pass
             try:
-                self.cog_unload()
+                await disnake.utils.maybe_coroutine(self.cog_unload)
             except Exception as e:
                 _log.error(
                     "An error occurred while unloading the %s cog.", self.qualified_name, exc_info=e

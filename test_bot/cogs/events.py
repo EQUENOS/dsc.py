@@ -28,5 +28,5 @@ class EventListeners(commands.Cog):
         print("Scheduled event unsubscribe", event, user, sep="\n", end="\n\n")
 
 
-def setup(bot) -> None:
-    bot.add_cog(EventListeners(bot))
+async def setup(bot) -> None:
+    await bot.add_cog(EventListeners(bot))

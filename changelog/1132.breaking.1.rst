@@ -1,0 +1,1 @@
+The majority of the library now assumes that there is an asyncio event loop running.

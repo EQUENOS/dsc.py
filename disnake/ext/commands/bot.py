@@ -10,8 +10,6 @@ from .bot_base import BotBase, when_mentioned, when_mentioned_or
 from .interaction_bot_base import InteractionBotBase
 
 if TYPE_CHECKING:
-    import asyncio
-
     import aiohttp
     from typing_extensions import Self
 
@@ -237,8 +235,6 @@ class Bot(BotBase, InteractionBotBase, disnake.Client):
             sync_commands: bool = ...,
             sync_commands_debug: bool = ...,
             sync_commands_on_cog_unload: bool = ...,
-            asyncio_debug: bool = False,
-            loop: Optional[asyncio.AbstractEventLoop] = None,
             shard_id: Optional[int] = None,
             shard_count: Optional[int] = None,
             enable_debug_events: bool = False,
@@ -289,8 +285,6 @@ class AutoShardedBot(BotBase, InteractionBotBase, disnake.AutoShardedClient):
             sync_commands: bool = ...,
             sync_commands_debug: bool = ...,
             sync_commands_on_cog_unload: bool = ...,
-            asyncio_debug: bool = False,
-            loop: Optional[asyncio.AbstractEventLoop] = None,
             shard_ids: Optional[List[int]] = None,  # instead of shard_id
             shard_count: Optional[int] = None,
             enable_debug_events: bool = False,
@@ -438,8 +432,6 @@ class InteractionBot(InteractionBotBase, disnake.Client):
             sync_commands: bool = ...,
             sync_commands_debug: bool = ...,
             sync_commands_on_cog_unload: bool = ...,
-            asyncio_debug: bool = False,
-            loop: Optional[asyncio.AbstractEventLoop] = None,
             shard_id: Optional[int] = None,
             shard_count: Optional[int] = None,
             enable_debug_events: bool = False,
@@ -483,8 +475,6 @@ class AutoShardedInteractionBot(InteractionBotBase, disnake.AutoShardedClient):
             sync_commands: bool = ...,
             sync_commands_debug: bool = ...,
             sync_commands_on_cog_unload: bool = ...,
-            asyncio_debug: bool = False,
-            loop: Optional[asyncio.AbstractEventLoop] = None,
             shard_ids: Optional[List[int]] = None,  # instead of shard_id
             shard_count: Optional[int] = None,
             enable_debug_events: bool = False,

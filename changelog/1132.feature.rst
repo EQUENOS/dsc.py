@@ -1,0 +1,1 @@
+Add :meth:`Client.setup_hook`.

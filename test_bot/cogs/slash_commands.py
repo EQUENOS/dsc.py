@@ -73,5 +73,5 @@ class SlashCommands(commands.Cog):
         await inter.send(f"Is int: {isinstance(largenum, int)}")
 
 
-def setup(bot) -> None:
-    bot.add_cog(SlashCommands(bot))
+async def setup(bot) -> None:
+    await bot.add_cog(SlashCommands(bot))

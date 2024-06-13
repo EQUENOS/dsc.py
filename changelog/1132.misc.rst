@@ -1,0 +1,1 @@
+:meth:`Client.run` now uses :func:`asyncio.run` under-the-hood, instead of custom runner logic.

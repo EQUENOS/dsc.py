@@ -9,7 +9,7 @@
 
 import asyncio
 import os
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 import disnake
 import youtube_dl  # type: ignore
@@ -43,11 +43,8 @@ class YTDLSource(disnake.PCMVolumeTransformer):
         self.title = data.get("title")
 
     @classmethod
-    async def from_url(
-        cls, url, *, loop: Optional[asyncio.AbstractEventLoop] = None, stream: bool = False
-    ):
-        loop = loop or asyncio.get_event_loop()
-        data: Any = await loop.run_in_executor(
+    async def from_url(cls, url, *, stream: bool = False):
+        data: Any = await asyncio.get_running_loop().run_in_executor(
             None, lambda: ytdl.extract_info(url, download=not stream)
         )
 
@@ -94,7 +91,7 @@ class Music(commands.Cog):
     async def _play_url(self, ctx, *, url: str, stream: bool):
         await self.ensure_voice(ctx)
         async with ctx.typing():
-            player = await YTDLSource.from_url(url, loop=self.bot.loop, stream=stream)
+            player = await YTDLSource.from_url(url, stream=stream)
             ctx.voice_client.play(
                 player, after=lambda e: print(f"Player error: {e}") if e else None
             )
@@ -137,7 +134,11 @@ async def on_ready():
     print(f"Logged in as {bot.user} (ID: {bot.user.id})\n------")
 
 
-bot.add_cog(Music(bot))
+async def setup_hook():
+    await bot.add_cog(Music(bot))
+
+
+bot.setup_hook = setup_hook
 
 if __name__ == "__main__":
     bot.run(os.getenv("BOT_TOKEN"))

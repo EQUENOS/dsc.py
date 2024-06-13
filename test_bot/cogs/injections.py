@@ -123,5 +123,5 @@ class InjectionSlashCommands(commands.Cog):
         await inter.response.send_message(f"```py\n{pformat(locals())}\n```")
 
 
-def setup(bot) -> None:
-    bot.add_cog(InjectionSlashCommands(bot))
+async def setup(bot) -> None:
+    await bot.add_cog(InjectionSlashCommands(bot))

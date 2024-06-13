@@ -15,5 +15,5 @@ class UserCommands(commands.Cog):
         await inter.response.send_message(user.display_avatar.url, ephemeral=True)
 
 
-def setup(bot) -> None:
-    bot.add_cog(UserCommands(bot))
+async def setup(bot) -> None:
+    await bot.add_cog(UserCommands(bot))

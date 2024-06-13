@@ -49,7 +49,6 @@ class TestLoops:
                 instance._time = self._time
                 instance.count = self.count
                 instance.reconnect = self.reconnect
-                instance.loop = self.loop
                 instance._before_loop = self._before_loop
                 instance._after_loop = self._after_loop
                 instance._error = self._error

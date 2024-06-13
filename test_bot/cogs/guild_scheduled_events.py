@@ -53,5 +53,5 @@ class GuildScheduledEvents(commands.Cog):
         await inter.response.send_message(str(gse.image))
 
 
-def setup(bot: commands.Bot) -> None:
-    bot.add_cog(GuildScheduledEvents(bot))
+async def setup(bot: commands.Bot) -> None:
+    await bot.add_cog(GuildScheduledEvents(bot))

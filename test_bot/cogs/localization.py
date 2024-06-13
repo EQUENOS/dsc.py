@@ -79,5 +79,5 @@ class Localizations(commands.Cog):
         await inter.response.send_message(msg.content[::-1])
 
 
-def setup(bot) -> None:
-    bot.add_cog(Localizations(bot))
+async def setup(bot) -> None:
+    await bot.add_cog(Localizations(bot))

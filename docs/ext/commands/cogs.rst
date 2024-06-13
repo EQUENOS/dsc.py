@@ -63,7 +63,7 @@ Once you have defined your cogs, you need to tell the bot to register the cogs t
 
 .. code-block:: python3
 
-    bot.add_cog(Greetings(bot))
+    await bot.add_cog(Greetings(bot))
 
 This binds the cog to the bot, adding all commands and listeners to the bot automatically.
 
@@ -71,7 +71,7 @@ Note that we reference the cog by name, which we can override through :ref:`ext_
 
 .. code-block:: python3
 
-    bot.remove_cog('Greetings')
+    await bot.remove_cog('Greetings')
 
 Using Cogs
 ----------

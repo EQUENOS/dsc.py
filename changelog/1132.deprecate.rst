@@ -1,0 +1,1 @@
+Deprecated :attr:`Client.loop`. Use :func:`asyncio.get_running_loop` instead.

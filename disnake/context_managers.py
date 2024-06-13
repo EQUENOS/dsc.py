@@ -26,7 +26,6 @@ def _typing_done_callback(fut: asyncio.Future) -> None:
 
 class Typing:
     def __init__(self, messageable: Union[Messageable, ThreadOnlyGuildChannel]) -> None:
-        self.loop: asyncio.AbstractEventLoop = messageable._state.loop
         self.messageable: Union[Messageable, ThreadOnlyGuildChannel] = messageable
 
     async def do_typing(self) -> None:
@@ -42,7 +41,7 @@ class Typing:
             await asyncio.sleep(5)
 
     def __enter__(self) -> Self:
-        self.task: asyncio.Task = self.loop.create_task(self.do_typing())
+        self.task: asyncio.Task = asyncio.create_task(self.do_typing())
         self.task.add_done_callback(_typing_done_callback)
         return self
 

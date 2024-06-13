@@ -1,0 +1,1 @@
+|commands| :meth:`.ext.commands.Cog.cog_load` is now called *after* the cog finished loading.

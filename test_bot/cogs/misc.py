@@ -50,5 +50,5 @@ class Misc(commands.Cog):
         await inter.response.send_message(".", view=view)
 
 
-def setup(bot) -> None:
-    bot.add_cog(Misc(bot))
+async def setup(bot) -> None:
+    await bot.add_cog(Misc(bot))

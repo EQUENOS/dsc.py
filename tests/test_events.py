@@ -43,8 +43,9 @@ def test_event(client_or_bot: disnake.Client) -> None:
 # Client.wait_for
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize("event", ["thread_create", Event.thread_create])
-def test_wait_for(client_or_bot: disnake.Client, event) -> None:
+async def test_wait_for(client_or_bot: disnake.Client, event) -> None:
     coro = client_or_bot.wait_for(event)
     assert len(client_or_bot._listeners["thread_create"]) == 1
     coro.close()  # close coroutine to avoid warning
@@ -95,22 +96,24 @@ def test_listen__implicit(client_or_bot: disnake.Client) -> None:
 
 
 # @commands.Cog.listener
+@pytest.mark.asyncio
 @pytest.mark.parametrize("event", ["on_automod_rule_update", Event.automod_rule_update])
-def test_listener(bot: commands.Bot, event) -> None:
+async def test_listener(bot: commands.Bot, event) -> None:
     class Cog(commands.Cog):
         @commands.Cog.listener(event)
         async def callback(self, *args: Any) -> None:
             ...
 
-    bot.add_cog(Cog())
+    await bot.add_cog(Cog())
     assert len(bot.extra_events["on_automod_rule_update"]) == 1
 
 
-def test_listener__implicit(bot: commands.Bot) -> None:
+@pytest.mark.asyncio
+async def test_listener__implicit(bot: commands.Bot) -> None:
     class Cog(commands.Cog):
         @commands.Cog.listener()
         async def on_automod_rule_update(self, *args: Any) -> None:
             ...
 
-    bot.add_cog(Cog())
+    await bot.add_cog(Cog())
     assert len(bot.extra_events["on_automod_rule_update"]) == 1

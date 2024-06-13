@@ -1,0 +1,1 @@
+|commands| The ``setup`` and ``teardown`` functions utilized by :ref:`ext_commands_extensions` can now be asynchronous.

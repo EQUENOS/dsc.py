@@ -232,9 +232,8 @@ class ModalStore:
         self._modals: Dict[Tuple[int, str], Modal] = {}
 
     def add_modal(self, user_id: int, modal: Modal) -> None:
-        loop = asyncio.get_running_loop()
         self._modals[(user_id, modal.custom_id)] = modal
-        loop.create_task(self.handle_timeout(user_id, modal.custom_id, modal.timeout))
+        asyncio.create_task(self.handle_timeout(user_id, modal.custom_id, modal.timeout))
 
     def remove_modal(self, user_id: int, modal_custom_id: str) -> Modal:
         return self._modals.pop((user_id, modal_custom_id))

@@ -1,0 +1,1 @@
+|commands| Make :meth:`.ext.commands.Bot.load_extensions`, :meth:`.ext.commands.Bot.load_extension`, :meth:`.ext.commands.Bot.unload_extension`, :meth:`.ext.commands.Bot.reload_extension`, :meth:`.ext.commands.Bot.add_cog` and :meth:`.ext.commands.Bot.remove_cog` asynchronous.

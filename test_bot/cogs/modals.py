@@ -74,5 +74,5 @@ class Modals(commands.Cog):
         await modal_inter.response.send_message(embed=embed)
 
 
-def setup(bot: commands.Bot) -> None:
-    bot.add_cog(Modals(bot))
+async def setup(bot: commands.Bot) -> None:
+    await bot.add_cog(Modals(bot))

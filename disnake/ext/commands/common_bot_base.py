@@ -11,6 +11,7 @@ import os
 import sys
 import time
 import types
+from functools import partial
 from typing import TYPE_CHECKING, Any, Dict, Generic, List, Mapping, Optional, Set, TypeVar, Union
 
 import disnake
@@ -97,14 +98,14 @@ class CommonBotBase(Generic[CogT]):
 
         for extension in tuple(self.__extensions):
             try:
-                self.unload_extension(extension)
+                await self.unload_extension(extension)
             except Exception as error:
                 error.__suppress_context__ = True
                 _log.error("Failed to unload extension %r", extension, exc_info=error)
 
         for cog in tuple(self.__cogs):
             try:
-                self.remove_cog(cog)
+                await self.remove_cog(cog)
             except Exception as error:
                 error.__suppress_context__ = True
                 _log.exception("Failed to remove cog %r", cog, exc_info=error)
@@ -115,12 +116,11 @@ class CommonBotBase(Generic[CogT]):
     async def login(self, token: str) -> None:
         await super().login(token=token)  # type: ignore
 
-        loop: asyncio.AbstractEventLoop = self.loop  # type: ignore
         if self.reload:
-            loop.create_task(self._watchdog())
+            asyncio.create_task(self._watchdog())
 
         # prefetch
-        loop.create_task(self._fill_owners())
+        asyncio.create_task(self._fill_owners())
 
     async def is_owner(self, user: Union[disnake.User, disnake.Member]) -> bool:
         """|coro|
@@ -157,7 +157,7 @@ class CommonBotBase(Generic[CogT]):
         else:
             return user.id in self.owner_ids
 
-    def add_cog(self, cog: Cog, *, override: bool = False) -> None:
+    async def add_cog(self, cog: Cog, *, override: bool = False) -> None:
         """Adds a "cog" to the bot.
 
         A cog is a class that has its own event listeners and commands.
@@ -170,6 +170,9 @@ class CommonBotBase(Generic[CogT]):
 
             :exc:`.ClientException` is raised when a cog with the same name
             is already loaded.
+
+        .. versionchanged:: 3.0
+            This is now a coroutine.
 
         Parameters
         ----------
@@ -199,10 +202,10 @@ class CommonBotBase(Generic[CogT]):
         if existing is not None:
             if not override:
                 raise disnake.ClientException(f"Cog named {cog_name!r} already loaded")
-            self.remove_cog(cog_name)
+            await self.remove_cog(cog_name)
 
         # NOTE: Should be covariant
-        cog = cog._inject(self)  # type: ignore
+        cog = await cog._inject(self)  # type: ignore
         self.__cogs[cog_name] = cog
 
     def get_cog(self, name: str) -> Optional[Cog]:
@@ -224,7 +227,7 @@ class CommonBotBase(Generic[CogT]):
         """
         return self.__cogs.get(name)
 
-    def remove_cog(self, name: str) -> Optional[Cog]:
+    async def remove_cog(self, name: str) -> Optional[Cog]:
         """Removes a cog from the bot and returns it.
 
         All registered commands and event listeners that the
@@ -235,6 +238,9 @@ class CommonBotBase(Generic[CogT]):
         This automatically re-syncs application commands, provided that
         :attr:`command_sync_flags.sync_on_cog_actions <.CommandSyncFlags.sync_on_cog_actions>`
         isn't disabled.
+
+        .. versionchanged:: 3.0
+            This is now a coroutine.
 
         Parameters
         ----------
@@ -254,7 +260,7 @@ class CommonBotBase(Generic[CogT]):
         if help_command and help_command.cog is cog:
             help_command.cog = None
         # NOTE: Should be covariant
-        cog._eject(self)  # type: ignore
+        await cog._eject(self)  # type: ignore
 
         return cog
 
@@ -265,12 +271,12 @@ class CommonBotBase(Generic[CogT]):
 
     # extensions
 
-    def _remove_module_references(self, name: str) -> None:
+    async def _remove_module_references(self, name: str) -> None:
         # find all references to the module
         # remove the cogs registered from the module
         for cogname, cog in self.__cogs.copy().items():
             if _is_submodule(name, cog.__module__):
-                self.remove_cog(cogname)
+                await self.remove_cog(cogname)
         # remove all the listeners from the module
         for event_list in self.extra_events.copy().values():
             remove = [
@@ -282,14 +288,14 @@ class CommonBotBase(Generic[CogT]):
             for index in reversed(remove):
                 del event_list[index]
 
-    def _call_module_finalizers(self, lib: types.ModuleType, key: str) -> None:
+    async def _call_module_finalizers(self, lib: types.ModuleType, key: str) -> None:
         try:
             func = lib.teardown
         except AttributeError:
             pass
         else:
             try:
-                func(self)
+                await disnake.utils.maybe_coroutine(partial(func, self))
             except Exception as error:
                 error.__suppress_context__ = True
                 _log.error("Exception in extension finalizer %r", key, exc_info=error)
@@ -301,7 +307,7 @@ class CommonBotBase(Generic[CogT]):
                 if _is_submodule(name, module):
                     del sys.modules[module]
 
-    def _load_from_module_spec(self, spec: importlib.machinery.ModuleSpec, key: str) -> None:
+    async def _load_from_module_spec(self, spec: importlib.machinery.ModuleSpec, key: str) -> None:
         # precondition: key not in self.__extensions
         lib = importlib.util.module_from_spec(spec)
         sys.modules[key] = lib
@@ -318,11 +324,11 @@ class CommonBotBase(Generic[CogT]):
             raise errors.NoEntryPointError(key) from None
 
         try:
-            setup(self)
+            await disnake.utils.maybe_coroutine(partial(setup, self))
         except Exception as e:
             del sys.modules[key]
-            self._remove_module_references(lib.__name__)
-            self._call_module_finalizers(lib, key)
+            await self._remove_module_references(lib.__name__)
+            await self._call_module_finalizers(lib, key)
             raise errors.ExtensionFailed(key, e) from e
         else:
             self.__extensions[key] = lib
@@ -333,7 +339,7 @@ class CommonBotBase(Generic[CogT]):
         except ImportError as e:
             raise errors.ExtensionNotFound(name) from e
 
-    def load_extension(self, name: str, *, package: Optional[str] = None) -> None:
+    async def load_extension(self, name: str, *, package: Optional[str] = None) -> None:
         """Loads an extension.
 
         An extension is a python module that contains commands, cogs, or
@@ -342,6 +348,9 @@ class CommonBotBase(Generic[CogT]):
         An extension must have a global function, ``setup`` defined as
         the entry point on what to do when the extension is loaded. This entry
         point must have a single argument, the ``bot``.
+
+        .. versionchanged:: 3.0
+            This is now a coroutine.
 
         Parameters
         ----------
@@ -377,9 +386,9 @@ class CommonBotBase(Generic[CogT]):
         if spec is None:
             raise errors.ExtensionNotFound(name)
 
-        self._load_from_module_spec(spec, name)
+        await self._load_from_module_spec(spec, name)
 
-    def unload_extension(self, name: str, *, package: Optional[str] = None) -> None:
+    async def unload_extension(self, name: str, *, package: Optional[str] = None) -> None:
         """Unloads an extension.
 
         When the extension is unloaded, all commands, listeners, and cogs are
@@ -389,6 +398,9 @@ class CommonBotBase(Generic[CogT]):
         to do miscellaneous clean-up if necessary. This function takes a single
         parameter, the ``bot``, similar to ``setup`` from
         :meth:`~.Bot.load_extension`.
+
+        .. versionchanged:: 3.0
+            This is now a coroutine.
 
         Parameters
         ----------
@@ -416,16 +428,19 @@ class CommonBotBase(Generic[CogT]):
         if lib is None:
             raise errors.ExtensionNotLoaded(name)
 
-        self._remove_module_references(lib.__name__)
-        self._call_module_finalizers(lib, name)
+        await self._remove_module_references(lib.__name__)
+        await self._call_module_finalizers(lib, name)
 
-    def reload_extension(self, name: str, *, package: Optional[str] = None) -> None:
+    async def reload_extension(self, name: str, *, package: Optional[str] = None) -> None:
         """Atomically reloads an extension.
 
         This replaces the extension with the same extension, only refreshed. This is
         equivalent to a :meth:`unload_extension` followed by a :meth:`load_extension`
         except done in an atomic way. That is, if an operation fails mid-reload then
         the bot will roll-back to the prior working state.
+
+        .. versionchanged:: 3.0
+            This is now a coroutine.
 
         Parameters
         ----------
@@ -467,9 +482,9 @@ class CommonBotBase(Generic[CogT]):
 
         try:
             # Unload and then load the module...
-            self._remove_module_references(lib.__name__)
-            self._call_module_finalizers(lib, name)
-            self.load_extension(name)
+            await self._remove_module_references(lib.__name__)
+            await self._call_module_finalizers(lib, name)
+            await self.load_extension(name)
         except Exception:
             # if the load failed, the remnants should have been
             # cleaned from the load_extension function call
@@ -481,10 +496,13 @@ class CommonBotBase(Generic[CogT]):
             sys.modules.update(modules)
             raise
 
-    def load_extensions(self, path: str) -> None:
+    async def load_extensions(self, path: str) -> None:
         """Loads all extensions in a directory.
 
         .. versionadded:: 2.4
+
+        .. versionchanged:: 3.0
+            This is now a coroutine.
 
         Parameters
         ----------
@@ -492,7 +510,7 @@ class CommonBotBase(Generic[CogT]):
             The path to search for extensions
         """
         for extension in disnake.utils.search_directory(path):
-            self.load_extension(extension)
+            await self.load_extension(extension)
 
     @property
     def extensions(self) -> Mapping[str, types.ModuleType]:
@@ -535,7 +553,7 @@ class CommonBotBase(Generic[CogT]):
 
             for name in extensions:
                 try:
-                    self.reload_extension(name)
+                    await self.reload_extension(name)
                 except errors.ExtensionError as e:
                     reload_log.exception(e)
                 else:
