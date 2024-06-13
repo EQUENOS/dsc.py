@@ -327,7 +327,7 @@ class Context(disnake.abc.Messageable, Generic[BotT]):
             return None
 
         cmd = cmd.copy()
-        cmd.context = self
+        cmd.context = self  # type: ignore  # variance issues
         if len(args) == 0:
             await cmd.prepare_help_command(self, None)
             mapping = cmd.get_bot_mapping()

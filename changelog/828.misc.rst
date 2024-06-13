@@ -1,0 +1,1 @@
+|commands| Add typing annotations to :class:`~ext.commands.HelpCommand` and related types.

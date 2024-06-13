@@ -16,7 +16,6 @@ from typing import (
     Optional,
     Tuple,
     Type,
-    TypeVar,
     Union,
 )
 
@@ -34,6 +33,7 @@ if TYPE_CHECKING:
 
     from disnake.interactions import ApplicationCommandInteraction
 
+    from ._types import FuncT
     from .bot import AutoShardedBot, AutoShardedInteractionBot, Bot, InteractionBot
     from .context import Context
     from .core import Command
@@ -45,8 +45,6 @@ __all__ = (
     "CogMeta",
     "Cog",
 )
-
-FuncT = TypeVar("FuncT", bound=Callable[..., Any])
 
 MISSING: Any = disnake.utils.MISSING
 _log = logging.getLogger(__name__)

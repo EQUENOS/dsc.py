@@ -11,6 +11,8 @@ if TYPE_CHECKING:
 
 T = TypeVar("T")
 
+FuncT = TypeVar("FuncT", bound=Callable[..., Any])
+
 Coro = Coroutine[Any, Any, T]
 MaybeCoro = Union[T, Coro[T]]
 CoroFunc = Callable[..., Coro[Any]]
