@@ -27,7 +27,7 @@ from disnake.enums import Event
 from ._types import _BaseCommand
 from .base_core import InvokableApplicationCommand
 from .ctx_menus_core import InvokableMessageCommand, InvokableUserCommand
-from .slash_core import InvokableSlashCommand
+from .slash_core import InvokableSlashCommand, SubCommand, SubCommandGroup
 
 if TYPE_CHECKING:
     from typing_extensions import Self
@@ -753,22 +753,16 @@ class Cog(metaclass=CogMeta):
 
         for index, command in enumerate(self.__cog_app_commands__):
             command.cog = self
+            if isinstance(command, (SubCommand, SubCommandGroup)):
+                continue
             try:
-                if isinstance(command, InvokableSlashCommand):
-                    bot.add_slash_command(command)
-                elif isinstance(command, InvokableUserCommand):
-                    bot.add_user_command(command)
-                elif isinstance(command, InvokableMessageCommand):
-                    bot.add_message_command(command)
+                bot.add_app_command(command)
             except Exception:
                 # undo our additions
                 for to_undo in self.__cog_app_commands__[:index]:
-                    if isinstance(to_undo, InvokableSlashCommand):
-                        bot.remove_slash_command(to_undo.name)
-                    elif isinstance(to_undo, InvokableUserCommand):
-                        bot.remove_user_command(to_undo.name)
-                    elif isinstance(to_undo, InvokableMessageCommand):
-                        bot.remove_message_command(to_undo.name)
+                    bot._remove_app_commands(
+                        to_undo.body.type, to_undo.name, guild_ids=to_undo.guild_ids
+                    )
                 raise
 
         if not hasattr(self.cog_load.__func__, "__cog_special_method__"):
@@ -841,12 +835,9 @@ class Cog(metaclass=CogMeta):
                     bot.remove_command(command.name)  # type: ignore
 
             for app_command in self.__cog_app_commands__:
-                if isinstance(app_command, InvokableSlashCommand):
-                    bot.remove_slash_command(app_command.name)
-                elif isinstance(app_command, InvokableUserCommand):
-                    bot.remove_user_command(app_command.name)
-                elif isinstance(app_command, InvokableMessageCommand):
-                    bot.remove_message_command(app_command.name)
+                bot._remove_app_commands(
+                    app_command.body.type, app_command.name, guild_ids=app_command.guild_ids
+                )
 
             for name, method_name in self.__cog_listeners__:
                 bot.remove_listener(getattr(self, method_name), name)

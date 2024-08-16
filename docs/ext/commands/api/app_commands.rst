@@ -138,6 +138,13 @@ CommandSyncFlags
 .. autoclass:: CommandSyncFlags()
     :members:
 
+AppCmdIndex
+~~~~~~~~~~~
+
+.. attributetable:: AppCmdIndex
+
+.. autoclass:: AppCmdIndex
+
 Injection
 ~~~~~~~~~
 

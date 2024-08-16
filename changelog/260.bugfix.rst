@@ -1,0 +1,1 @@
+|commands| Allow registering 2 commands with the same type and name in different guilds.

@@ -12,6 +12,7 @@ from typing import (
     Callable,
     Dict,
     List,
+    NamedTuple,
     Optional,
     Tuple,
     TypeVar,
@@ -49,7 +50,7 @@ if TYPE_CHECKING:
     ]
 
 
-__all__ = ("InvokableApplicationCommand", "default_member_permissions")
+__all__ = ("AppCmdIndex", "InvokableApplicationCommand", "default_member_permissions")
 
 
 T = TypeVar("T")
@@ -77,6 +78,26 @@ def wrap_callback(coro):
         return ret
 
     return wrapped
+
+
+class AppCmdIndex(NamedTuple):
+    """A named tuple used for indexation of :class:`InvokableApplicationCommand`
+    objects stored in bot's cache.
+
+    Attributes
+    ----------
+    type: :class:`disnake.ApplicationCommandType`
+        The type of the application command being stored.
+    name: :class:`str`
+        The name of the application command being stored.
+    guild_id: Optional[:class:`int`]
+        One of the guild IDs this command should be registered to,
+        or ``None`` if it's a global command.
+    """
+
+    type: ApplicationCommandType
+    name: str
+    guild_id: Optional[int]
 
 
 class InvokableApplicationCommand(ABC):

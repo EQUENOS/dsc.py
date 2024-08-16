@@ -1,0 +1,1 @@
+|commands| Add :class:`.ext.commands.ApplicationCommandRegistrationError`.

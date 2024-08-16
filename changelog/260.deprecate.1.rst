@@ -1,0 +1,1 @@
+|commands| :meth:`.ext.commands.InteractionBot.add_slash_command`, :meth:`.ext.commands.InteractionBot.add_user_command`, :meth:`.ext.commands.InteractionBot.add_message_command` are deprecated.

@@ -1,0 +1,1 @@
+|commands| Add ``guild_id`` parameter to :meth:`.ext.commands.InteractionBot.get_slash_command`, :meth:`.ext.commands.InteractionBot.get_user_command`, and :meth:`.ext.commands.InteractionBot.get_message_command`.

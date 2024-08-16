@@ -186,6 +186,9 @@ Exceptions
 .. autoexception:: CommandRegistrationError
     :members:
 
+.. autoexception:: ApplicationCommandRegistrationError
+    :members:
+
 
 Exception Hierarchy
 ~~~~~~~~~~~~~~~~~~~
@@ -252,6 +255,7 @@ Exception Hierarchy
             - :exc:`ExtensionNotFound`
     - :exc:`~.ClientException`
         - :exc:`CommandRegistrationError`
+            - :exc:`ApplicationCommandRegistrationError`
 
 Warnings
 --------

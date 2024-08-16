@@ -796,9 +796,11 @@ def slash_command(
 
         .. versionadded:: 2.5
 
-    guild_ids: List[:class:`int`]
-        If specified, the client will register the command in these guilds.
-        Otherwise, this command will be registered globally.
+    guild_ids: Optional[Sequence[:class:`int`]]
+        If specified, the client will register the command to these guilds.
+        Otherwise the command will be registered globally, unless
+        parameter ``test_guilds`` is specified in the bot constructor, in which case
+        this command will be registered to those guilds.
     connectors: Dict[:class:`str`, :class:`str`]
         Binds function names to option names. If the name
         of an option already matches the corresponding function param,

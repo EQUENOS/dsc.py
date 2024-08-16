@@ -1,0 +1,1 @@
+|commands| Add :meth:`.ext.commands.InteractionBot.add_app_command` and :meth:`.ext.commands.InteractionBot.remove_app_command`.
