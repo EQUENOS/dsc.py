@@ -71,7 +71,7 @@ class TestParamInfo:
 class TestBaseRange:
     @pytest.mark.parametrize("args", [int, (int,), (int, 1, 2, 3)])
     def test_param_count(self, args) -> None:
-        with pytest.raises(TypeError, match=r"`Range` expects 3 type arguments"):
+        with pytest.raises(TypeError, match=r"`Range` expects 3 arguments"):
             commands.Range[args]  # type: ignore
 
     @pytest.mark.parametrize("value", ["int", 42, Optional[int], Union[int, float]])
