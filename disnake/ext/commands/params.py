@@ -87,7 +87,7 @@ else:
 if sys.version_info >= (3, 10):
     from types import UnionType
 else:
-    UnionType = Type[Union]
+    UnionType = object()
 
 T = TypeVar("T", bound=Any)
 TypeT = TypeVar("TypeT", bound=Type[Any])
