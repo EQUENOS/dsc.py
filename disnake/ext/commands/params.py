@@ -185,6 +185,23 @@ def _range_to_str_len(min_value: int, max_value: int) -> Tuple[int, int]:
     return min(min_, max_), max(min_, max_)
 
 
+def _unbound_range_to_str_len(
+    min_value: Optional[int], max_value: Optional[int]
+) -> Tuple[Optional[int], Optional[int]]:
+    if min_value is not None and max_value is not None:
+        return _range_to_str_len(min_value, max_value)
+
+    elif min_value is not None and min_value > 0:
+        # 0 < min_value <= max_value == inf
+        return _int_to_str_len(min_value), None
+
+    elif max_value is not None and max_value < 0:
+        # -inf == min_value <= max_value < 0
+        return None, _int_to_str_len(max_value)
+
+    return None, None
+
+
 class Injection(Generic[P, T_]):
     """Represents a slash command injection.
 
@@ -771,21 +788,10 @@ class ParamInfo:
             if annotation is not int:
                 raise TypeError("Large integers must be annotated with int or LargeInt")
             self.type = str
-
-            if self.min_value is not None and self.max_value is not None:
-                # honestly would rather assert than type ignore these
-                self.min_length, self.max_length = _range_to_str_len(
-                    self.min_value,  # pyright: ignore
-                    self.max_value,  # pyright: ignore
-                )
-
-            elif self.min_value is not None and self.min_value > 0:
-                # 0 < min_value <= max_value == inf
-                self.min_length = _int_to_str_len(self.min_value)  # pyright: ignore
-
-            elif self.max_value is not None and self.max_value < 0:
-                # -inf == max_value <= min_value < 0
-                self.max_length = _int_to_str_len(self.max_value)  # pyright: ignore
+            self.min_length, self.max_length = _unbound_range_to_str_len(
+                self.min_value,  # type: ignore
+                self.max_value,  # type: ignore
+            )
 
         elif annotation in self.TYPES:
             self.type = annotation
