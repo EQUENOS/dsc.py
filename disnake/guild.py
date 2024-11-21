@@ -95,6 +95,7 @@ if TYPE_CHECKING:
     from .app_commands import APIApplicationCommand
     from .asset import AssetBytes
     from .automod import AutoModTriggerMetadata
+    from .interactions import Interaction
     from .permissions import Permissions
     from .state import ConnectionState
     from .template import Template
@@ -107,6 +108,7 @@ if TYPE_CHECKING:
         Guild as GuildPayload,
         GuildFeature,
         MFALevel,
+        PartialGuild as PartialGuildPayload,
     )
     from .types.integration import IntegrationType
     from .types.role import CreateRole as CreateRolePayload
@@ -4961,6 +4963,33 @@ class Guild(Hashable):
         """
         data = await self._state.http.get_guild_onboarding(self.id)
         return Onboarding(data=data, guild=self)
+
+
+class PartialInteractionGuild(Guild):
+    """Reimplementation of :class:`Guild` for guilds interactions."""
+
+    def __init__(
+        self,
+        *,
+        state: ConnectionState,
+        data: PartialGuildPayload,
+        interaction: Interaction,
+    ) -> None:
+        super().__init__(state=state, data=data)
+        # init the fake data
+        self._add_role(
+            Role(
+                state=state,
+                guild=self,
+                data={"id": self.id, "name": "@everyone"},  # type: ignore
+            )
+        )
+        self._add_channel(interaction.channel)  # type: ignore
+        # honestly we cannot set me, because we do not necessarily have a user in the guild
+
+    @property
+    def me(self) -> Any:
+        return self._state.user
 
 
 PlaceholderID = NewType("PlaceholderID", int)

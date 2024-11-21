@@ -149,6 +149,10 @@ class Guild(_BaseGuildPreview):
     guild_scheduled_events: NotRequired[List[GuildScheduledEvent]]
 
 
+class PartialGuild(Guild, total=False):
+    pass
+
+
 class InviteGuild(Guild, total=False):
     welcome_screen: WelcomeScreen
 

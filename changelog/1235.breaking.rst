@@ -1,0 +1,1 @@
+:attr:`Interaction.guild` is now a :class:`Guild` instance if the guild could not be found in cache.
