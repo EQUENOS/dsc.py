@@ -42,7 +42,7 @@ from .app_commands import (
     ApplicationCommand,
     GuildApplicationCommandPermissions,
 )
-from .appinfo import AppInfo
+from .appinfo import AppInfo, InstallParams
 from .application_role_connection import ApplicationRoleConnectionMetadata
 from .backoff import ExponentialBackoff
 from .channel import PartialMessageable, _threaded_channel_factory
@@ -2373,6 +2373,93 @@ class Client:
             The bot's application information.
         """
         data = await self.http.application_info()
+        if "rpc_origins" not in data:
+            data["rpc_origins"] = None
+        return AppInfo(self._connection, data)
+
+    async def edit_application_info(
+        self,
+        *,
+        description: Optional[str] = MISSING,
+        flags: ApplicationFlags = MISSING,
+        icon: Optional[AssetBytes] = MISSING,
+        cover_image: Optional[AssetBytes] = MISSING,
+        custom_install_url: Optional[str] = MISSING,
+        install_params: Optional[InstallParams] = MISSING,
+        role_connections_verification_url: Optional[str] = MISSING,
+        interactions_endpoint_url: Optional[str] = MISSING,
+        tags: Optional[List[str]] = MISSING,
+    ) -> AppInfo:
+        """|coro|
+
+        Edit's the application's information.
+
+        All parameters are optional.
+
+        .. versionadded:: 2.10
+
+        Parameters
+        ----------
+        description: Optional[:class:`str`]
+            The application's description.
+        flags: Optional[:class:`.ApplicationFlags`]
+            The application's public flags.
+        tags: Optional[List[:class:`str`]]
+            The application's tags.
+        install_params: Optional[:class:`.InstallParams`]
+            The installation parameters for this application.
+        custom_install_url: Optional[:class:`str`]
+            The custom installation url for this application.
+        role_connections_verification_url: Optional[:class:`str`]
+            The application's role connection verification entry point,
+            which when configured will render the app as a verification method
+            in the guild role verification configuration.
+        icon: |resource_type|
+            Update the application's icon asset, if any.
+        cover_image: |resource_type|
+            Retrieves the cover image on a store embed, if any.
+
+        Raises
+        ------
+        HTTPException
+            Editing the information failed somehow.
+
+        Returns
+        -------
+        :class:`.AppInfo`
+            The bot's application information.
+        """
+        fields: Dict[str, Any] = {}
+
+        if install_params is not MISSING:
+            fields["install_params"] = None if install_params is None else install_params.to_dict()
+
+        if icon is not MISSING:
+            fields["icon"] = await utils._assetbytes_to_base64_data(icon)
+
+        if cover_image is not MISSING:
+            fields["cover_image"] = await utils._assetbytes_to_base64_data(cover_image)
+
+        if flags is not MISSING:
+            fields["flags"] = flags.value
+
+        if description is not MISSING:
+            fields["description"] = description
+
+        if custom_install_url is not MISSING:
+            fields["custom_install_url"] = custom_install_url
+
+        if role_connections_verification_url is not MISSING:
+            fields["role_connections_verification_url"] = role_connections_verification_url
+
+        if interactions_endpoint_url is not MISSING:
+            fields["interactions_endpoint_url"] = interactions_endpoint_url
+
+        if tags is not MISSING:
+            fields["tags"] = tags
+
+        data = await self.http.edit_application_info(**fields)
+
         if "rpc_origins" not in data:
             data["rpc_origins"] = None
         return AppInfo(self._connection, data)
