@@ -9,10 +9,13 @@ Webhook support
 :license: MIT, see LICENSE for more details.
 
 """
-from . import async_, sync
+
+from . import async_, interaction, sync
 from .async_ import *
+from .interaction import *
 from .sync import *
 
 __all__ = []
 __all__.extend(async_.__all__)
+__all__.extend(interaction.__all__)
 __all__.extend(sync.__all__)

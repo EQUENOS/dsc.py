@@ -54,6 +54,8 @@ if TYPE_CHECKING:
     import datetime
     from types import TracebackType
 
+    from typing_extensions import Self
+
     from ..abc import Snowflake
     from ..asset import AssetBytes
     from ..channel import ForumChannel, MediaChannel, StageChannel, TextChannel, VoiceChannel
@@ -1261,7 +1263,7 @@ class Webhook(BaseWebhook):
         return cls(feed, session=session, state=state, token=state.http.token)
 
     @classmethod
-    def from_state(cls, data, state) -> Webhook:
+    def from_state(cls, data, state) -> Self:
         session = state.http._HTTPClient__session
         return cls(data, session=session, state=state, token=state.http.token)
 
