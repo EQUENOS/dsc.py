@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: MIT
 
 [build-system]
-requires = ["setuptools>=61"]
-build-backend = "setuptools.build_meta"
+requires = ["pdm-backend>=2.0"]
+build-backend = "pdm.backend"
 
 [project]
 name = "disnake"
@@ -124,6 +124,15 @@ test = { cmd = "test", help = "Run pytest" }
 
 [tool.taskipy.settings]
 runner = "pdm run"
+
+[tool.pdm.build]
+includes = [
+    "disnake/",
+]
+
+[tool.pdm.version]
+source = "file"
+path = "disnake/__init__.py"
 
 [tool.black]
 line-length = 100

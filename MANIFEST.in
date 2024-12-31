@@ -1,8 +1,0 @@
-include README.md
-include LICENSE
-include disnake/bin/*
-include disnake/py.typed
-include disnake/ext/commands/py.typed
-include disnake/ext/tasks/py.typed
-global-exclude *.py[cod]
-exclude pdm.lock

@@ -12,6 +12,7 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
+import importlib.metadata
 import importlib.util
 import inspect
 import os
@@ -103,14 +104,10 @@ copyright = "2015-2021, Rapptz, 2021-present, Disnake Development"
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 #
-# The short X.Y version.
-
-version = ""
-with open("../disnake/__init__.py") as f:
-    version = re.search(r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]', f.read(), re.MULTILINE).group(1)  # type: ignore
-
 # The full version, including alpha/beta/rc tags.
-release = version
+release = importlib.metadata.version("disnake")
+# The short X.Y version.
+version = ".".join(release.split(".")[:2])
 
 
 _IS_READTHEDOCS = bool(os.getenv("READTHEDOCS"))
