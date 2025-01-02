@@ -572,6 +572,37 @@ class LargeIntConversionFailure(BadArgument):
         super().__init__(f"{argument} is not able to be converted to an integer")
 
 
+class LargeIntOutOfRange(BadArgument):
+    """Exception raised when an argument to a large integer option exceeds given range.
+
+    This inherits from :exc:`BadArgument`
+
+    .. versionadded:: 2.11
+
+    Attributes
+    ----------
+    argument: :class:`str`
+        The argument that exceeded the defined range.
+    min_value: Optional[Union[:class:`int`, :class:`float`]]
+        The minimum allowed value.
+    max_value: Optional[Union[:class:`int`, :class:`float`]]
+        The maximum allowed value.
+    """
+
+    def __init__(
+        self,
+        argument: str,
+        min_value: Union[int, float, None],
+        max_value: Union[int, float, None],
+    ) -> None:
+        self.argument: str = argument
+        self.min_value: Union[int, float, None] = min_value
+        self.max_value: Union[int, float, None] = max_value
+        a = "..." if min_value is None else min_value
+        b = "..." if max_value is None else max_value
+        super().__init__(f"{argument} is not in range [{a}, {b}]")
+
+
 class DisabledCommand(CommandError):
     """Exception raised when the command being invoked is disabled.
 

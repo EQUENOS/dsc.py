@@ -6,7 +6,7 @@ import disnake
 from disnake.ext import commands
 
 
-async def test_autocomp(inter, string: str):
+async def test_alt_autocomp(inter: disnake.CommandInteraction[commands.Bot], string: str):
     return ["XD", ":D", ":)", ":|", ":("]
 
 
@@ -36,7 +36,7 @@ class SlashCommands(commands.Cog):
     async def alt_auto(
         self,
         inter: disnake.AppCmdInter[commands.Bot],
-        mood: str = commands.Param(autocomplete=test_autocomp),
+        mood: str = commands.Param(autocomplete=test_alt_autocomp),
     ) -> None:
         await inter.send(mood)
 
@@ -68,10 +68,14 @@ class SlashCommands(commands.Cog):
 
     @commands.slash_command()
     async def largenumber(
-        self, inter: disnake.CommandInteraction[commands.Bot], largenum: commands.LargeInt
+        self,
+        inter: disnake.CommandInteraction[commands.Bot],
+        a: commands.LargeInt,
+        b: commands.Range[commands.LargeInt, -(2**54), 2000],
+        c: Optional[commands.Range[commands.LargeInt, ..., 2000]] = None,
     ) -> None:
-        await inter.send(f"Is int: {isinstance(largenum, int)}")
+        await inter.send(f"{inter.options}\n{a} {b} {c}")
 
 
-def setup(bot) -> None:
+def setup(bot: commands.Bot) -> None:
     bot.add_cog(SlashCommands(bot))

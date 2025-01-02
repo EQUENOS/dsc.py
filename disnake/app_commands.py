@@ -284,9 +284,9 @@ class Option:
         self.required: bool = required
         self.options: List[Option] = options or []
 
-        if min_value and self.type is OptionType.integer:
+        if min_value is not None and self.type is OptionType.integer:
             min_value = math.ceil(min_value)
-        if max_value and self.type is OptionType.integer:
+        if max_value is not None and self.type is OptionType.integer:
             max_value = math.floor(max_value)
 
         self.min_value: Optional[float] = min_value
