@@ -11,6 +11,7 @@ import json
 import os
 import pkgutil
 import re
+import string
 import sys
 import types
 import unicodedata
@@ -797,7 +798,8 @@ _MARKDOWN_ESCAPE_SUBREGEX = "|".join(
     r"\{0}(?=([\s\S]*((?<!\{0})\{0})))".format(c) for c in ("*", "`", "_", "~", "|")
 )
 
-_MARKDOWN_ESCAPE_COMMON = r"^>(?:>>)?\s|\[.+\]\(.+\)"
+# todo: fix issue with lists including the preceeding spaces more sustainably
+_MARKDOWN_ESCAPE_COMMON = r"^>(?:>>)?\s|^#{1,3}\s|^(?P<keep>\s*?)?(?P<char>[-*])\s|\[.+\]\(.+\)"
 
 _MARKDOWN_ESCAPE_REGEX = re.compile(
     rf"(?P<markdown>{_MARKDOWN_ESCAPE_SUBREGEX}|{_MARKDOWN_ESCAPE_COMMON})", re.MULTILINE
@@ -834,7 +836,7 @@ def remove_markdown(text: str, *, ignore_links: bool = True) -> str:
 
     def replacement(match):
         groupdict = match.groupdict()
-        return groupdict.get("url", "")
+        return groupdict.get("url", "") or groupdict.get("keep", "")
 
     regex = _MARKDOWN_STOCK_REGEX
     if ignore_links:
@@ -868,12 +870,12 @@ def escape_markdown(text: str, *, as_needed: bool = False, ignore_links: bool = 
     """
     if not as_needed:
 
-        def replacement(match):
+        def replacement(match: re.Match[str]) -> str:
             groupdict = match.groupdict()
             is_url = groupdict.get("url")
             if is_url:
                 return is_url
-            return "\\" + groupdict["markdown"]
+            return "".join(c if c in string.whitespace else "\\" + c for c in groupdict["markdown"])
 
         regex = _MARKDOWN_STOCK_REGEX
         if ignore_links:
