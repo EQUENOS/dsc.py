@@ -529,7 +529,11 @@ class ParamInfo:
         self.param_name: str = self.name
         self.converter = converter
         self.convert_default = convert_default
+
+        if autocomplete:
+            classify_autocompleter(autocomplete)
         self.autocomplete = autocomplete
+
         self.choices = choices or []
         self.type = type or str
         self.channel_types = channel_types or []
@@ -1122,7 +1126,7 @@ def Param(
     choices: Optional[Choices] = None,
     converter: Optional[Callable[[ApplicationCommandInteraction[BotT], Any], Any]] = None,
     convert_defaults: bool = False,
-    autocomplete: Optional[Callable[[ApplicationCommandInteraction[BotT], str], Any]] = None,
+    autocomplete: Optional[AnyAutocompleter] = None,
     channel_types: Optional[List[ChannelType]] = None,
     lt: Optional[float] = None,
     le: Optional[float] = None,
