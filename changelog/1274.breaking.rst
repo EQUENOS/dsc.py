@@ -1,0 +1,1 @@
+:meth:`SKU.subscriptions` mistakenly returned a coroutine, unlike other iterator methods. Instead of ``async for x in await sku.subscriptions():``, correct usage now is ``async for x in sku.subscriptions():``.

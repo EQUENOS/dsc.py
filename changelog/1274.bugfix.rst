@@ -1,0 +1,1 @@
+Change :meth:`SKU.subscriptions` to be a synchronous method (returning an async iterator), to match other iterator methods.

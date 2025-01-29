@@ -87,7 +87,7 @@ class SKU(Hashable):
         """:class:`SKUFlags`: Returns the SKU's flags."""
         return SKUFlags._from_value(self._flags)
 
-    async def subscriptions(
+    def subscriptions(
         self,
         user: Snowflake,
         *,
@@ -95,9 +95,7 @@ class SKU(Hashable):
         before: Optional[SnowflakeTime] = None,
         after: Optional[SnowflakeTime] = None,
     ) -> SubscriptionIterator:
-        """|coro|
-
-        Retrieves an :class:`.AsyncIterator` that enables receiving subscriptions for the SKU.
+        """Retrieves an :class:`.AsyncIterator` that enables receiving subscriptions for the SKU.
 
         All parameters, except ``user``, are optional.
 
