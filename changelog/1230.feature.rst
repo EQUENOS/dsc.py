@@ -1,0 +1,3 @@
+Add support for guild incident actions.
+- Add :class:`IncidentsData` and :attr:`Guild.incidents_data` attribute.
+- New ``invites_disabled_until`` and ``dms_disabled_until`` parameters for :meth:`Guild.edit`.

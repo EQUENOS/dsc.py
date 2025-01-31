@@ -113,6 +113,14 @@ OnboardingPromptOption
 .. autoclass:: OnboardingPromptOption()
     :members:
 
+IncidentsData
+~~~~~~~~~~~~~
+
+.. attributetable:: IncidentsData
+
+.. autoclass:: IncidentsData()
+    :members:
+
 Data Classes
 ------------
 

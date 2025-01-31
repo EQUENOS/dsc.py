@@ -743,12 +743,11 @@ class Member(disnake.abc.Messageable, _UserTag):
 
         .. versionadded:: 2.3
         """
-        if self._communication_disabled_until is None:
-            return None
-
-        if self._communication_disabled_until < utils.utcnow():
+        if (
+            self._communication_disabled_until is not None
+            and self._communication_disabled_until < utils.utcnow()
+        ):
             self._communication_disabled_until = None
-            return None
 
         return self._communication_disabled_until
 

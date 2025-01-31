@@ -1463,6 +1463,12 @@ class HTTPClient:
             Route("PATCH", "/guilds/{guild_id}", guild_id=guild_id), json=payload, reason=reason
         )
 
+    def edit_guild_incident_actions(
+        self, guild_id: Snowflake, payload: guild.IncidentsData
+    ) -> Response[guild.IncidentsData]:
+        r = Route("PUT", "/guilds/{guild_id}/incident-actions", guild_id=guild_id)
+        return self.request(r, json=payload)
+
     def get_template(self, code: str) -> Response[template.Template]:
         return self.request(Route("GET", "/guilds/templates/{code}", code=code))
 

@@ -84,6 +84,7 @@ from .welcome_screen import WelcomeScreen, WelcomeScreenChannel
 from .widget import Widget, WidgetSettings
 
 __all__ = (
+    "IncidentsData",
     "Guild",
     "GuildBuilder",
 )
@@ -107,6 +108,7 @@ if TYPE_CHECKING:
         CreateGuildPlaceholderRole,
         Guild as GuildPayload,
         GuildFeature,
+        IncidentsData as IncidentsDataPayload,
         MFALevel,
     )
     from .types.integration import IntegrationType
@@ -130,6 +132,86 @@ class _GuildLimit(NamedTuple):
     bitrate: float
     filesize: int
     sounds: int
+
+
+class IncidentsData:
+    """Represents data about various security incidents/actions in a guild.
+
+    .. collapse:: operations
+
+        .. describe:: x == y
+
+            Checks if two ``IncidentsData`` instances are equal.
+
+        .. describe:: x != y
+
+            Checks if two ``IncidentsData`` instances are not equal.
+
+    .. versionadded:: 2.10
+
+    Attributes
+    ----------
+    dm_spam_detected_at: Optional[:class:`datetime.datetime`]
+        The time (in UTC) at which DM spam was last detected.
+    raid_detected_at: Optional[:class:`datetime.datetime`]
+        The time (in UTC) at which a raid was last detected.
+    """
+
+    __slots__ = (
+        "_invites_disabled_until",
+        "_dms_disabled_until",
+        "dm_spam_detected_at",
+        "raid_detected_at",
+    )
+
+    def __init__(self, data: IncidentsDataPayload) -> None:
+        self._invites_disabled_until: Optional[datetime.datetime] = utils.parse_time(
+            data.get("invites_disabled_until")
+        )
+        self._dms_disabled_until: Optional[datetime.datetime] = utils.parse_time(
+            data.get("dms_disabled_until")
+        )
+        self.dm_spam_detected_at: Optional[datetime.datetime] = utils.parse_time(
+            data.get("dm_spam_detected_at")
+        )
+        self.raid_detected_at: Optional[datetime.datetime] = utils.parse_time(
+            data.get("raid_detected_at")
+        )
+
+    @property
+    def invites_disabled_until(self) -> Optional[datetime.datetime]:
+        """Optional[:class:`datetime.datetime`]: Returns the time (in UTC) until
+        which users cannot join the server via invites, if any.
+        """
+        if (
+            self._invites_disabled_until is not None
+            and self._invites_disabled_until < utils.utcnow()
+        ):
+            self._invites_disabled_until = None
+
+        return self._invites_disabled_until
+
+    @property
+    def dms_disabled_until(self) -> Optional[datetime.datetime]:
+        """Optional[:class:`datetime.datetime`]: Returns the time (in UTC) until
+        which members cannot send DMs to each other, if any.
+
+        This does not apply to moderators, bots, or members who are
+        already friends with each other.
+        """
+        if self._dms_disabled_until is not None and self._dms_disabled_until < utils.utcnow():
+            self._dms_disabled_until = None
+
+        return self._dms_disabled_until
+
+    def __eq__(self, other: Any) -> bool:
+        return (
+            isinstance(other, IncidentsData)
+            and self.invites_disabled_until == other.invites_disabled_until
+            and self.dms_disabled_until == other.dms_disabled_until
+            and self.dm_spam_detected_at == other.dm_spam_detected_at
+            and self.raid_detected_at == other.raid_detected_at
+        )
 
 
 class Guild(Hashable):
@@ -318,6 +400,11 @@ class Guild(Hashable):
         To get a full :class:`Invite` object, see :attr:`Guild.vanity_invite`.
 
         .. versionadded:: 2.5
+
+    incidents_data: Optional[:class:`IncidentsData`]
+        Data about various security incidents/actions in this guild, like disabled invites/DMs.
+
+        .. versionadded:: 2.10
     """
 
     __slots__ = (
@@ -350,6 +437,7 @@ class Guild(Hashable):
         "widget_enabled",
         "widget_channel_id",
         "vanity_url_code",
+        "incidents_data",
         "_members",
         "_channels",
         "_icon",
@@ -595,6 +683,11 @@ class Guild(Hashable):
         self.vanity_url_code: Optional[str] = guild.get("vanity_url_code")
         self._safety_alerts_channel_id: Optional[int] = utils._get_as_snowflake(
             guild, "safety_alerts_channel_id"
+        )
+        self.incidents_data: Optional[IncidentsData] = (
+            IncidentsData(incidents_data)
+            if (incidents_data := guild.get("incidents_data"))
+            else None
         )
 
         stage_instances = guild.get("stage_instances")
@@ -2036,6 +2129,8 @@ class Guild(Hashable):
         discovery_splash: Optional[AssetBytes] = MISSING,
         community: bool = MISSING,
         invites_disabled: bool = MISSING,
+        invites_disabled_until: Optional[Union[datetime.datetime, datetime.timedelta]] = MISSING,
+        dms_disabled_until: Optional[Union[datetime.datetime, datetime.timedelta]] = MISSING,
         raid_alerts_disabled: bool = MISSING,
         afk_channel: Optional[VoiceChannel] = MISSING,
         owner: Snowflake = MISSING,
@@ -2121,7 +2216,8 @@ class Guild(Hashable):
             Whether the guild should be a Community guild. If set to ``True``\\, both ``rules_channel``
             and ``public_updates_channel`` parameters are required.
         invites_disabled: :class:`bool`
-            Whether the guild has paused invites, preventing new users from joining.
+            Whether the guild has paused invites (indefinitely), preventing new users from joining.
+            See also the ``invites_disabled_until`` parameter.
 
             This is only available to guilds that contain ``COMMUNITY``
             in :attr:`Guild.features`.
@@ -2129,6 +2225,30 @@ class Guild(Hashable):
             This cannot be changed at the same time as the ``community`` feature due a Discord API limitation.
 
             .. versionadded:: 2.6
+
+        invites_disabled_until: Optional[Union[:class:`datetime.datetime`, :class:`datetime.timedelta`]]
+            The time until/for which invites are paused.
+            See also the ``invites_disabled`` parameter.
+
+            Can be set to ``None`` to re-enable invites.
+
+            This is only available to guilds that contain ``COMMUNITY``
+            in :attr:`Guild.features`.
+
+            .. versionadded:: 2.10
+
+        dms_disabled_until: Union[:class:`datetime.datetime`, :class:`datetime.timedelta`]
+            The time until/for which DMs between guild members are disabled.
+
+            This does not apply to moderators, bots, or members who are
+            already friends with each other.
+
+            Can be set to ``None`` to re-enable DMs.
+
+            This is only available to guilds that contain ``COMMUNITY``
+            in :attr:`Guild.features`.
+
+            .. versionadded:: 2.10
 
         raid_alerts_disabled: :class:`bool`
             Whether the guild has disabled join raid alerts.
@@ -2215,6 +2335,30 @@ class Guild(Hashable):
 
         if vanity_code is not MISSING:
             await http.change_vanity_code(self.id, vanity_code, reason=reason)
+
+        if invites_disabled_until is not MISSING or dms_disabled_until is not MISSING:
+            payload: IncidentsDataPayload = {}
+
+            # we need to include the old values, otherwise Discord will consider them set to `null`
+            # (which would e.g. re-enable DMs when disabling invites)
+            if self.incidents_data:
+                if invites_disabled_until is MISSING:
+                    invites_disabled_until = self.incidents_data.invites_disabled_until
+                if dms_disabled_until is MISSING:
+                    dms_disabled_until = self.incidents_data.dms_disabled_until
+
+            if invites_disabled_until is not MISSING:
+                if isinstance(invites_disabled_until, datetime.timedelta):
+                    invites_disabled_until = utils.utcnow() + invites_disabled_until
+                payload["invites_disabled_until"] = utils.isoformat_utc(invites_disabled_until)
+
+            if dms_disabled_until is not MISSING:
+                if isinstance(dms_disabled_until, datetime.timedelta):
+                    dms_disabled_until = utils.utcnow() + dms_disabled_until
+                payload["dms_disabled_until"] = utils.isoformat_utc(dms_disabled_until)
+
+            if payload:
+                await http.edit_guild_incident_actions(self.id, payload)
 
         fields: Dict[str, Any] = {}
         if name is not MISSING:
