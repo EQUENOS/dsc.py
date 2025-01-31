@@ -22,6 +22,7 @@ class EmbedThumbnail(TypedDict):
     proxy_url: NotRequired[str]
     height: NotRequired[int]
     width: NotRequired[int]
+    flags: NotRequired[int]
 
 
 class EmbedVideo(TypedDict, total=False):
@@ -36,6 +37,7 @@ class EmbedImage(TypedDict):
     proxy_url: NotRequired[str]
     height: NotRequired[int]
     width: NotRequired[int]
+    flags: NotRequired[int]
 
 
 class EmbedProvider(TypedDict, total=False):
@@ -67,3 +69,4 @@ class Embed(TypedDict, total=False):
     provider: EmbedProvider
     author: EmbedAuthor
     fields: List[EmbedField]
+    flags: int

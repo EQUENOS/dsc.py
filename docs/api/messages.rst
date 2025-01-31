@@ -169,6 +169,22 @@ AttachmentFlags
 .. autoclass:: AttachmentFlags()
     :members:
 
+EmbedFlags
+~~~~~~~~~~
+
+.. attributetable:: EmbedFlags
+
+.. autoclass:: EmbedFlags()
+    :members:
+
+EmbedMediaFlags
+~~~~~~~~~~~~~~~
+
+.. attributetable:: EmbedMediaFlags
+
+.. autoclass:: EmbedMediaFlags()
+    :members:
+
 AllowedMentions
 ~~~~~~~~~~~~~~~
 

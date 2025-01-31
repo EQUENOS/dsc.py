@@ -1,0 +1,1 @@
+Add :attr:`Embed.flags`, ``Embed.image.flags``, ``Embed.thumbnail.flags``, :class:`EmbedFlags`, :class:`EmbedMediaFlags` and update the :class:`AttachmentFlags`.

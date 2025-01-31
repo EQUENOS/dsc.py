@@ -45,6 +45,8 @@ __all__ = (
     "SKUFlags",
     "ApplicationInstallTypes",
     "InteractionContextTypes",
+    "EmbedFlags",
+    "EmbedMediaFlags",
 )
 
 BF = TypeVar("BF", bound="BaseFlags")
@@ -2598,12 +2600,61 @@ class AttachmentFlags(BaseFlags):
     if TYPE_CHECKING:
 
         @_generated
-        def __init__(self, *, is_remix: bool = ...) -> None: ...
+        def __init__(
+            self,
+            *,
+            contains_explicit_media: bool = ...,
+            is_animated: bool = ...,
+            is_clip: bool = ...,
+            is_remix: bool = ...,
+            is_spoiler: bool = ...,
+            is_thumbnail: bool = ...,
+        ) -> None: ...
+
+    @flag_value
+    def is_clip(self):
+        """:class:`bool`: Returns ``True`` if the attachment is a clip.
+
+        .. versionadded:: 2.11
+        """
+        return 1 << 0
+
+    @flag_value
+    def is_thumbnail(self):
+        """:class:`bool`: Returns ``True`` if the attachment is the thumbnail of a thread in a media channel.
+
+        .. versionadded:: 2.11
+        """
+        return 1 << 1
 
     @flag_value
     def is_remix(self):
         """:class:`bool`: Returns ``True`` if the attachment has been edited using the Remix feature."""
         return 1 << 2
+
+    @flag_value
+    def is_spoiler(self):
+        """:class:`bool`: Returns ``True`` if the attachment was marked as a spoiler.
+
+        .. versionadded:: 2.11
+        """
+        return 1 << 3
+
+    @flag_value
+    def contains_explicit_media(self):
+        """:class:`bool`: Returns ``True`` if the attachment was flagged as sensitive content.
+
+        .. versionadded:: 2.11
+        """
+        return 1 << 4
+
+    @flag_value
+    def is_animated(self):
+        """:class:`bool`: Returns ``True`` if the attachment is an animated image.
+
+        .. versionadded:: 2.11
+        """
+        return 1 << 5
 
 
 class SKUFlags(BaseFlags):
@@ -2892,3 +2943,164 @@ class InteractionContextTypes(ListBaseFlags):
     def private_channel(self):
         """:class:`bool`: Returns ``True`` if the command is usable in DMs and group DMs with other users."""
         return 1 << 2
+
+
+class EmbedFlags(BaseFlags):
+    """Wraps up Discord Embed flags.
+
+    .. collapse:: operations
+
+        .. describe:: x == y
+
+            Checks if two EmbedFlags instances are equal.
+        .. describe:: x != y
+
+            Checks if two EmbedFlags instances are not equal.
+        .. describe:: x <= y
+
+            Checks if an EmbedFlags instance is a subset of another EmbedFlags instance.
+        .. describe:: x >= y
+
+            Checks if an EmbedFlags instance is a superset of another EmbedFlags instance.
+        .. describe:: x < y
+
+            Checks if an EmbedFlags instance is a strict subset of another EmbedFlags instance.
+        .. describe:: x > y
+
+            Checks if an EmbedFlags instance is a strict superset of another EmbedFlags instance.
+        .. describe:: x | y, x |= y
+
+            Returns a new EmbedFlags instance with all enabled flags from both x and y.
+            (Using ``|=`` will update in place).
+        .. describe:: x & y, x &= y
+
+            Returns a new EmbedFlags instance with only flags enabled on both x and y.
+            (Using ``&=`` will update in place).
+        .. describe:: x ^ y, x ^= y
+
+            Returns a new EmbedFlags instance with only flags enabled on one of x or y, but not both.
+            (Using ``^=`` will update in place).
+        .. describe:: ~x
+
+            Returns a new EmbedFlags instance with all flags from x inverted.
+        .. describe:: hash(x)
+
+            Returns the flag's hash.
+        .. describe:: iter(x)
+
+            Returns an iterator of ``(name, value)`` pairs. This allows it
+            to be, for example, constructed as a dict or a list of pairs.
+            Note that aliases are not shown.
+
+        Additionally supported are a few operations on class attributes.
+
+        .. describe:: EmbedFlags.y | EmbedFlags.z, EmbedFlags(y=True) | EmbedFlags.z
+
+            Returns an EmbedFlags instance with all provided flags enabled.
+
+        .. describe:: ~EmbedFlags.y
+
+            Returns an EmbedFlags instance with all flags except ``y`` inverted from their default value.
+
+    .. versionadded:: 2.11
+
+    Attributes
+    ----------
+    value: :class:`int`
+        The raw value. You should query flags via the properties
+        rather than using this raw value.
+    """
+
+    if TYPE_CHECKING:
+
+        @_generated
+        def __init__(
+            self, *, contains_explicit_media: bool = ..., is_content_inventory_entry: bool = ...
+        ) -> None: ...
+
+    @flag_value
+    def contains_explicit_media(self):
+        """:class:`bool`: Returns ``True`` if the embed was flagged as sensitive content."""
+        return 1 << 4
+
+    @flag_value
+    def is_content_inventory_entry(self):
+        """:class:`bool`: Returns ``True`` if the embed is a reply to an activity card."""
+        return 1 << 5
+
+
+class EmbedMediaFlags(BaseFlags):
+    """Wraps up Discord Embed media flags.
+
+    .. collapse:: operations
+
+        .. describe:: x == y
+
+            Checks if two EmbedMediaFlags instances are equal.
+        .. describe:: x != y
+
+            Checks if two EmbedMediaFlags instances are not equal.
+        .. describe:: x <= y
+
+            Checks if an EmbedMediaFlags instance is a subset of another EmbedMediaFlags instance.
+        .. describe:: x >= y
+
+            Checks if an EmbedMediaFlags instance is a superset of another EmbedMediaFlags instance.
+        .. describe:: x < y
+
+            Checks if an EmbedMediaFlags instance is a strict subset of another EmbedMediaFlags instance.
+        .. describe:: x > y
+
+            Checks if an EmbedMediaFlags instance is a strict superset of another EmbedMediaFlags instance.
+        .. describe:: x | y, x |= y
+
+            Returns a new EmbedMediaFlags instance with all enabled flags from both x and y.
+            (Using ``|=`` will update in place).
+        .. describe:: x & y, x &= y
+
+            Returns a new EmbedMediaFlags instance with only flags enabled on both x and y.
+            (Using ``&=`` will update in place).
+        .. describe:: x ^ y, x ^= y
+
+            Returns a new EmbedMediaFlags instance with only flags enabled on one of x or y, but not both.
+            (Using ``^=`` will update in place).
+        .. describe:: ~x
+
+            Returns a new EmbedMediaFlags instance with all flags from x inverted.
+        .. describe:: hash(x)
+
+            Returns the flag's hash.
+        .. describe:: iter(x)
+
+            Returns an iterator of ``(name, value)`` pairs. This allows it
+            to be, for example, constructed as a dict or a list of pairs.
+            Note that aliases are not shown.
+
+        Additionally supported are a few operations on class attributes.
+
+        .. describe:: EmbedMediaFlags.y | EmbedMediaFlags.z, EmbedMediaFlags(y=True) | EmbedMediaFlags.z
+
+            Returns an EmbedMediaFlags instance with all provided flags enabled.
+
+        .. describe:: ~EmbedMediaFlags.y
+
+            Returns an EmbedMediaFlags instance with all flags except ``y`` inverted from their default value.
+
+    .. versionadded:: 2.11
+
+    Attributes
+    ----------
+    value: :class:`int`
+        The raw value. You should query flags via the properties
+        rather than using this raw value.
+    """
+
+    if TYPE_CHECKING:
+
+        @_generated
+        def __init__(self, *, is_animated: bool = ...) -> None: ...
+
+    @flag_value
+    def is_animated(self):
+        """:class:`bool`: Returns ``True`` if the embed media is animated."""
+        return 1 << 5
