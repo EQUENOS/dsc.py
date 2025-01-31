@@ -1,0 +1,1 @@
+Allow :class:`File` to accept ``io.StringIO`` as ``fp`` param.
