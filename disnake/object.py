@@ -2,13 +2,15 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, SupportsInt, Union
+from typing import TYPE_CHECKING, SupportsInt, Union, Any, Type
 
 from . import utils
 from .mixins import Hashable
 
 if TYPE_CHECKING:
     import datetime
+
+    from . import abc
 
     SupportsIntCast = Union[SupportsInt, str, bytes, bytearray]
 
@@ -49,7 +51,7 @@ class Object(Hashable):
         The ID of the object.
     """
 
-    def __init__(self, id: SupportsIntCast) -> None:
+    def __init__(self, id: SupportsIntCast, *, type: Type[abc.Snowflake] = None) -> None:
         try:
             id = int(id)
         except ValueError:
@@ -58,9 +60,17 @@ class Object(Hashable):
             ) from None
         else:
             self.id = id
+            self.type: Type[abc.Snowflake] = type if type else self.__class__
 
     def __repr__(self) -> str:
-        return f"<Object id={self.id!r}>"
+        return f"<Object id={self.id!r} type={self.type!r}>"
+
+    def __eq__(self, other: object) -> bool:
+        if isinstance(other, self.type):
+            return self.id == other.id
+        return NotImplemented
+
+    __hash__ = Hashable.__hash__
 
     @property
     def created_at(self) -> datetime.datetime:
