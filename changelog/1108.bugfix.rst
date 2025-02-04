@@ -1,0 +1,1 @@
+Make message_command check both local and synchronized guild_ids

@@ -917,9 +917,13 @@ class InteractionBotBase(CommonBotBase):
         # Same process but for each specified guild individually.
         # Notice that we're not doing this for every single guild for optimisation purposes.
         # See the note in :meth:`_cache_application_commands` about guild app commands.
+        guild_ids_to_check = set(guild_cmds.keys())
+        for guild_id in self._connection._guild_application_commands.keys():
+            guild_ids_to_check.add(guild_id)
         if self._command_sync_flags.sync_guild_commands:
-            for guild_id, cmds in guild_cmds.items():
+            for guild_id in guild_ids_to_check:
                 current_guild_cmds = self._connection._guild_application_commands.get(guild_id, {})
+                cmds = guild_cmds.get(guild_id, {})
                 diff = _app_commands_diff(cmds, current_guild_cmds.values())
                 if not self._command_sync_flags.allow_command_deletion:
                     # because allow_command_deletion is disabled, we want to never automatically delete a command
