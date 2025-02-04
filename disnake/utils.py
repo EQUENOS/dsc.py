@@ -17,6 +17,7 @@ import unicodedata
 import warnings
 from base64 import b64encode
 from bisect import bisect_left
+from enum import Enum
 from inspect import getdoc as _getdoc, isawaitable as _isawaitable, signature as _signature
 from operator import attrgetter
 from typing import (
@@ -93,6 +94,15 @@ class _MissingSentinel:
 
 
 MISSING: Any = _MissingSentinel()
+DOC_ALIASES = "Parameters|Params|Arguments|Args"
+NUMPY_AND_GOOGLE_STYLE_REGEX = re.compile(
+    r"(?P<desc>(.*\s*(?!"
+    + DOC_ALIASES
+    + r"))*)?(?P<_>\s*("
+    + DOC_ALIASES
+    + r")(:|\s-*)\s*)?(?P<params>(.*\s*)*)?"
+)
+PARAMS_SPLIT_REGEX = re.compile(r"(\b.*\b:)")
 
 
 class _cached_property:
@@ -929,41 +939,9 @@ class _ParsedDocstring(_DocstringLocalizationsMixin):
     params: Dict[str, _DocstringParam]
 
 
-def _count_left_spaces(string: str) -> int:
-    res = 0
-    for s in string:
-        if not s.isspace():
-            return res
-        res += 1
-    return res
-
-
-def _get_header_line(lines: List[str], header: str, underline: str) -> int:
-    underlining = len(header) * underline
-    for i, line in enumerate(lines):
-        if line.rstrip() == header and i + 1 < len(lines) and lines[i + 1].startswith(underlining):
-            return i
-    return len(lines)
-
-
-def _get_next_header_line(lines: List[str], underline: str, start: int = 0) -> int:
-    for idx, line in enumerate(lines[start:]):
-        i = start + idx
-        clean_line = line.rstrip()
-        if (
-            i > 0
-            and len(clean_line) > 0
-            and clean_line.count(underline) == len(clean_line)
-            and _count_left_spaces(lines[i - 1]) == 0
-            and len(lines[i - 1].rstrip()) <= len(clean_line)
-        ):
-            return i - 1
-    return len(lines)
-
-
-def _get_description(lines: List[str]) -> str:
-    end = _get_next_header_line(lines, "-")
-    return "\n".join(lines[:end]).strip()
+class _DocStyle(Enum):
+    numpy_or_google = "numpy_or_google"
+    rest = "reST"
 
 
 def _extract_localization_key(desc: str) -> Tuple[str, Tuple[Optional[str], Optional[str]]]:
@@ -975,59 +953,45 @@ def _extract_localization_key(desc: str) -> Tuple[str, Tuple[Optional[str], Opti
     return desc, (None, None)
 
 
-def _get_option_desc(lines: List[str]) -> Dict[str, _DocstringParam]:
-    start = _get_header_line(lines, "Parameters", "-") + 2
-    end = _get_next_header_line(lines, "-", start)
-    if start >= len(lines):
-        return {}
-    # Read option descriptions
+def get_style(doc: str) -> _DocStyle:
+    # is it reST style?
+    _match = re.search(r"^:", doc, flags=re.M)
+
+    # if None assume it's numpy style or google style
+    # even if it's only a description there are no changes
+    # between numpy, google and reST styles
+    if not _match:
+        return _DocStyle.numpy_or_google
+    return _DocStyle.rest
+
+
+def _process_params(params: str) -> Dict[str, _DocstringParam]:
+    _params: list[str] = [i for i in PARAMS_SPLIT_REGEX.split(params) if i]
     options: Dict[str, _DocstringParam] = {}
 
-    def add_param(param: Optional[str], desc_lines: List[str], maybe_type: Optional[str]) -> None:
+    def add_param(param: Optional[str], desc_lines: Optional[str]) -> None:
         if param is None:
             return
-        desc: Optional[str] = None
-        if desc_lines:
-            desc = "\n".join(desc_lines)
-        elif maybe_type:
-            desc = maybe_type
-        if desc is not None:
-            desc, (loc_key_name, loc_key_desc) = _extract_localization_key(desc)
-            # TODO: maybe parse types in the future
+        if desc_lines is not None:
+            desc, (loc_key_name, loc_key_desc) = _extract_localization_key(desc_lines)
             options[param] = {
                 "name": param,
-                "type": None,
                 "description": desc,
                 "localization_key_name": loc_key_name,
                 "localization_key_desc": loc_key_desc,
             }
 
-    desc_lines: List[str] = []
-    param: Optional[str] = None
-    maybe_type: Optional[str] = None
-    for line in lines[start:end]:
-        spaces = _count_left_spaces(line)
-        if spaces == 0:
-            # Add previous param desc
-            add_param(param, desc_lines, maybe_type)
-            # Prepare new param desc
-            if ":" in line:
-                param, maybe_type = line.split(":", 1)
-                param = param.strip()
-                maybe_type = maybe_type.strip()
-            else:
-                param = line.strip()
-                maybe_type = None
-            desc_lines = []
-        else:
-            desc_lines.append(line.strip())
-    # After the last iteration
-    add_param(param, desc_lines, maybe_type)
+    for i in range(0, len(_params), 2):
+        if i == len(_params) - 1:
+            break
+        add_param(((_params[i]).removesuffix(":")).strip(), (_params[i + 1]).strip())
+
     return options
 
 
-def parse_docstring(func: Callable) -> _ParsedDocstring:
+def parse_docstring(func: Callable[..., Any]) -> _ParsedDocstring:
     doc = _getdoc(func)
+
     if doc is None:
         return {
             "description": "",
@@ -1035,13 +999,56 @@ def parse_docstring(func: Callable) -> _ParsedDocstring:
             "localization_key_name": None,
             "localization_key_desc": None,
         }
-    lines = doc.splitlines()
-    desc, (loc_key_name, loc_key_desc) = _extract_localization_key(_get_description(lines))
+
+    if get_style(doc) == _DocStyle.numpy_or_google:
+        parsed = NUMPY_AND_GOOGLE_STYLE_REGEX.match(doc)
+        if parsed is None:
+            return {
+                "description": "",
+                "params": {},
+                "localization_key_name": None,
+                "localization_key_desc": None,
+            }
+
+        result = parsed.groupdict()
+        # escape numpy and google types
+        result["params"] = re.sub(
+            r"((\b(:.*:`.*`)|(.*\[:.*:`.*`)\b)(\]){0,})|((\s\(.*\))?:)", ":", result["params"]
+        )
+
+        desc, (loc_key_name, loc_key_desc) = _extract_localization_key(result["desc"])
+        # print(result)
+        return {
+            "description": desc,
+            "params": _process_params(result["params"]),
+            "localization_key_name": loc_key_name,
+            "localization_key_desc": loc_key_desc,
+        }
+
+    rest_style = re.search(r"(?P<desc>((?!^:).*\s*)*)?(?P<params>^:(.*\s*)*)", doc, flags=re.M)
+
+    if rest_style is None:
+        return {
+            "description": "",
+            "params": {},
+            "localization_key_name": None,
+            "localization_key_desc": None,
+        }
+
+    result = rest_style.groupdict()
+    # remove the param keyword
+    # we're replaceing the keyword with \n to make the other
+    # regex to split the parameters work
+    result["params"] = re.sub(r"((\s)?:param\s)", "\n", result["params"])
+    # remove type params docstrings
+    result["params"] = re.sub(r"((\s)?:\btype(\s.*)\b:\s(.*))?", "", result["params"])
+    desc, (loc_key_name, loc_key_desc) = _extract_localization_key(result["desc"])
+
     return {
         "description": desc,
+        "params": _process_params(result["params"]),
         "localization_key_name": loc_key_name,
         "localization_key_desc": loc_key_desc,
-        "params": _get_option_desc(lines),
     }
 
 
