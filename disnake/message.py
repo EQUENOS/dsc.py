@@ -38,7 +38,7 @@ from .enums import (
 from .errors import HTTPException
 from .file import File
 from .flags import AttachmentFlags, MessageFlags
-from .guild import Guild
+from .guild import Guild, GuildSoundboardSound
 from .member import Member
 from .mixins import Hashable
 from .partial_emoji import PartialEmoji
@@ -1097,6 +1097,11 @@ class Message(Hashable):
         The poll contained in this message.
 
         .. versionadded:: 2.10
+
+    soundboard_sounds: List[:class:`GuildSoundboardSound`]
+        A list of soundboard sounds in the message.
+
+        .. versionadded:: 2.11
     """
 
     __slots__ = (
@@ -1135,6 +1140,7 @@ class Message(Hashable):
         "components",
         "guild",
         "poll",
+        "soundboard_sounds",
         "_edited_timestamp",
         "_role_subscription_data",
     )
@@ -1199,6 +1205,11 @@ class Message(Hashable):
             self.guild = channel.guild  # type: ignore
         except AttributeError:
             self.guild = state._get_guild(utils._get_as_snowflake(data, "guild_id"))
+
+        self.soundboard_sounds: List[GuildSoundboardSound] = [
+            GuildSoundboardSound(data=d, state=state, guild_id=self.guild.id)
+            for d in data.get("soundboard_sounds", [])
+        ]
 
         self._interaction: Optional[InteractionReference] = (
             InteractionReference(state=state, guild=self.guild, data=interaction)
@@ -2885,6 +2896,10 @@ class ForwardedMessage:
         A list of components in the message.
     guild_id: Optional[:class:`int`]
         The guild ID where the message was forwarded from, if applicable.
+    soundboard_sounds: List[:class:`GuildSoundboardSound`]
+        A list of soundboard sounds in the message.
+
+        .. versionadded:: 2.11
     """
 
     __slots__ = (
@@ -2902,6 +2917,7 @@ class ForwardedMessage:
         "stickers",
         "components",
         "guild_id",
+        "soundboard_sounds",
     )
 
     def __init__(
@@ -2955,6 +2971,11 @@ class ForwardedMessage:
                 role = self.guild.get_role(role_id)
                 if role is not None:
                     self.role_mentions.append(role)
+
+        self.soundboard_sounds: List[GuildSoundboardSound] = [
+            GuildSoundboardSound(data=d, state=state, guild_id=guild_id or 0)
+            for d in data.get("soundboard_sounds", [])
+        ]
 
     def __repr__(self) -> str:
         return f"<{self.__class__.__name__}>"

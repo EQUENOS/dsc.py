@@ -87,6 +87,14 @@ class PartialSoundboardSound(Hashable, AssetMixin):
         return snowflake_time(self.id)
 
     @property
+    def mention(self) -> str:
+        """:class:`str`: Returns a string that allows you to mention the given soundboard sound.
+
+        .. versionadded:: 2.11
+        """
+        return f"<sound:0:{self.id}>"
+
+    @property
     def url(self) -> str:
         """:class:`str`: The url for the sound file."""
         return f"{Asset.BASE}/soundboard-sounds/{self.id}"
@@ -229,6 +237,16 @@ class GuildSoundboardSound(SoundboardSound):
         """:class:`Guild`: The guild that this sound is from."""
         # this will most likely never return None
         return self._state._get_guild(self.guild_id)  # type: ignore
+
+    @property
+    def mention(self) -> str:
+        """:class:`str`: Returns a string that allows you to mention the given soundboard sound.
+
+        .. versionadded:: 2.11
+        """
+        if self.is_default():
+            return super().mention
+        return f"<sound:{self.guild_id}:{self.id}>"
 
     async def edit(
         self,

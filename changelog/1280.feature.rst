@@ -1,0 +1,1 @@
+Add :attr:`PartialSoundboardSound.mention`, :attr:`SoundboardSound.mention`, :attr:`GuildSoundboardSound.mention`, :attr:`Message.soundboard_sounds` and :attr:`ForwardedMessage.soundboard_sounds`.

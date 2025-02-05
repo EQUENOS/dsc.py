@@ -14,6 +14,7 @@ from .interactions import InteractionDataResolved, InteractionMessageReference, 
 from .member import Member, UserWithMember
 from .poll import Poll
 from .snowflake import Snowflake, SnowflakeList
+from .soundboard import GuildSoundboardSound
 from .sticker import StickerItem
 from .threads import Thread
 from .user import User
@@ -90,6 +91,7 @@ class ForwardedMessage(TypedDict):
     mention_roles: NotRequired[SnowflakeList]
     sticker_items: NotRequired[List[StickerItem]]
     components: NotRequired[List[Component]]
+    soundboard_sounds: NotRequired[List[GuildSoundboardSound]]
 
 
 class MessageSnapshot(TypedDict):
@@ -149,6 +151,7 @@ class Message(TypedDict):
     # specific to MESSAGE_CREATE/MESSAGE_UPDATE events
     guild_id: NotRequired[Snowflake]
     member: NotRequired[Member]
+    soundboard_sounds: NotRequired[List[GuildSoundboardSound]]
 
 
 AllowedMentionType = Literal["roles", "users", "everyone"]
