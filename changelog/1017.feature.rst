@@ -1,0 +1,1 @@
+Add typing overloads to :meth:`Client.wait_for` for every :class:`Event` value, allowing for correct typing of the ``check`` parameter and the return value.

@@ -1518,13 +1518,15 @@ def assert_never(arg: Never, /) -> None:
     pass
 
 
-# n.b. This must be imported and used as @ _overload_with_permissions (without the space)
-# this is used by the libcst parser and has no runtime purpose
-# it is merely a marker not unlike pytest.mark
-def _overload_with_permissions(func: T) -> T:
+# n.b. These must be imported and used as @<name>.
+# This is used by the libcst parser and has no runtime purpose;
+# it is merely a marker not unlike pytest.mark.
+def _noop_decorator(func: T) -> T:
     return func
 
 
 # this is used as a marker for functions or classes that were created by codemodding
-def _generated(func: T) -> T:
-    return func
+_generated = _noop_decorator
+
+_overload_with_permissions = _noop_decorator
+_overload_with_events = _noop_decorator

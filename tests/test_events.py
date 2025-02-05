@@ -1,7 +1,9 @@
 # SPDX-License-Identifier: MIT
-from typing import Any
+
+from typing import Any, Coroutine
 
 import pytest
+from typing_extensions import assert_type
 
 import disnake
 from disnake import Event
@@ -47,6 +49,30 @@ def test_wait_for(client_or_bot: disnake.Client, event) -> None:
     coro = client_or_bot.wait_for(event)
     assert len(client_or_bot._listeners["thread_create"]) == 1
     coro.close()  # close coroutine to avoid warning
+
+
+def _test_typing_wait_for(client: disnake.Client, bot: commands.Bot) -> None:
+    expected_type = Coroutine[Any, Any, disnake.Guild]
+
+    # valid enum event
+    _ = assert_type(client.wait_for(Event.guild_join), expected_type)
+    _ = assert_type(client.wait_for(Event.guild_join, check=lambda g: True), expected_type)
+
+    # valid str event
+    _ = assert_type(client.wait_for("guild_join"), expected_type)
+    _ = assert_type(client.wait_for("guild_join", check=lambda g: True), expected_type)
+
+    # invalid check type
+    _ = client.wait_for(Event.guild_join, check=lambda: True)  # type: ignore
+    # n.b. this one isn't ideal, but there's no way to prevent type-checkers from using the fallback in this case
+    _ = assert_type(client.wait_for("guild_join", check=lambda: True), Coroutine[Any, Any, Any])
+
+    # bot-specific events
+    _ = client.wait_for(Event.slash_command_error)  # type: ignore  # this should error
+    _ = assert_type(
+        bot.wait_for(Event.slash_command),
+        Coroutine[Any, Any, disnake.ApplicationCommandInteraction[commands.Bot]],
+    )
 
 
 # Client.add_listener / Client.remove_listener

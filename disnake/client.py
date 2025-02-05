@@ -73,29 +73,72 @@ from .stage_instance import StageInstance
 from .state import ConnectionState
 from .sticker import GuildSticker, StandardSticker, StickerPack, _sticker_factory
 from .template import Template
-from .threads import Thread
+from .threads import Thread, ThreadMember
 from .ui.view import View
 from .user import ClientUser, User
-from .utils import MISSING, deprecated
+from .utils import MISSING, _generated, _overload_with_events, deprecated
 from .voice_client import VoiceClient
 from .voice_region import VoiceRegion
 from .webhook import Webhook
 from .widget import Widget
 
 if TYPE_CHECKING:
-    from typing_extensions import NotRequired
+    from typing_extensions import NotRequired, Self
 
-    from .abc import GuildChannel, PrivateChannel, Snowflake, SnowflakeTime
+    from disnake.ext import commands
+
+    from .abc import GuildChannel, Messageable, PrivateChannel, Snowflake, SnowflakeTime
     from .app_commands import APIApplicationCommand, MessageCommand, SlashCommand, UserCommand
     from .asset import AssetBytes
-    from .channel import DMChannel
-    from .member import Member
+    from .audit_logs import AuditLogEntry
+    from .automod import AutoModActionExecution, AutoModRule
+    from .channel import DMChannel, ForumChannel, GroupChannel, VoiceChannelEffect
+    from .guild_scheduled_event import GuildScheduledEvent
+    from .integrations import Integration
+    from .interactions import (
+        ApplicationCommandInteraction,
+        Interaction,
+        MessageInteraction,
+        ModalInteraction,
+    )
+    from .member import Member, VoiceState
     from .message import Message
+    from .poll import PollAnswer
+    from .raw_models import (
+        RawBulkMessageDeleteEvent,
+        RawGuildMemberRemoveEvent,
+        RawGuildScheduledEventUserActionEvent,
+        RawIntegrationDeleteEvent,
+        RawMessageDeleteEvent,
+        RawMessageUpdateEvent,
+        RawPollVoteActionEvent,
+        RawPresenceUpdateEvent,
+        RawReactionActionEvent,
+        RawReactionClearEmojiEvent,
+        RawReactionClearEvent,
+        RawThreadDeleteEvent,
+        RawThreadMemberRemoveEvent,
+        RawTypingEvent,
+        RawVoiceChannelEffectEvent,
+    )
+    from .reaction import Reaction
+    from .role import Role
     from .types.application_role_connection import (
         ApplicationRoleConnectionMetadata as ApplicationRoleConnectionMetadataPayload,
     )
     from .types.gateway import SessionStartLimit as SessionStartLimitPayload
     from .voice_client import VoiceProtocol
+
+    AnyPrefixBot = Union[commands.Bot, commands.AutoShardedBot]
+    AnyBot = Union[
+        AnyPrefixBot,
+        commands.InteractionBot,
+        commands.AutoShardedInteractionBot,
+    ]
+    # we can't use `typing.Self` when the `self: AnyBot` parameter is annotated,
+    # so go back to the old way of using a TypeVar for those overloads
+    AnyPrefixBotT = TypeVar("AnyPrefixBotT", bound=AnyPrefixBot)
+    AnyBotT = TypeVar("AnyBotT", bound=AnyBot)
 
 
 __all__ = (
@@ -1726,13 +1769,1324 @@ class Client:
         """
         await self._first_connect.wait()
 
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.connect, "connect"],
+        *,
+        check: Optional[Callable[[], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, None]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.disconnect, "disconnect"],
+        *,
+        check: Optional[Callable[[], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, None]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.ready, "ready"],
+        *,
+        check: Optional[Callable[[], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, None]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.resumed, "resumed"],
+        *,
+        check: Optional[Callable[[], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, None]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.shard_connect, "shard_connect"],
+        *,
+        check: Optional[Callable[[int], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, int]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.shard_disconnect, "shard_disconnect"],
+        *,
+        check: Optional[Callable[[int], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, int]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.shard_ready, "shard_ready"],
+        *,
+        check: Optional[Callable[[int], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, int]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.shard_resumed, "shard_resumed"],
+        *,
+        check: Optional[Callable[[int], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, int]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.socket_event_type, "socket_event_type"],
+        *,
+        check: Optional[Callable[[str], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, str]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.socket_raw_receive, "socket_raw_receive"],
+        *,
+        check: Optional[Callable[[str], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, str]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.socket_raw_send, "socket_raw_send"],
+        *,
+        check: Optional[Callable[[Union[str, bytes]], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Union[str, bytes]]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.guild_channel_create, "guild_channel_create"],
+        *,
+        check: Optional[Callable[[GuildChannel], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, GuildChannel]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.guild_channel_update, "guild_channel_update"],
+        *,
+        check: Optional[Callable[[GuildChannel, GuildChannel], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Tuple[GuildChannel, GuildChannel]]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.guild_channel_delete, "guild_channel_delete"],
+        *,
+        check: Optional[Callable[[GuildChannel], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, GuildChannel]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.guild_channel_pins_update, "guild_channel_pins_update"],
+        *,
+        check: Optional[Callable[[Union[GuildChannel, Thread], Optional[datetime]], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Tuple[Union[GuildChannel, Thread], Optional[datetime]]]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.invite_create, "invite_create"],
+        *,
+        check: Optional[Callable[[Invite], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Invite]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.invite_delete, "invite_delete"],
+        *,
+        check: Optional[Callable[[Invite], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Invite]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.private_channel_update, "private_channel_update"],
+        *,
+        check: Optional[Callable[[GroupChannel, GroupChannel], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Tuple[GroupChannel, GroupChannel]]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.private_channel_pins_update, "private_channel_pins_update"],
+        *,
+        check: Optional[Callable[[PrivateChannel, Optional[datetime]], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Tuple[PrivateChannel, Optional[datetime]]]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.webhooks_update, "webhooks_update"],
+        *,
+        check: Optional[Callable[[GuildChannel], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, GuildChannel]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.thread_create, "thread_create"],
+        *,
+        check: Optional[Callable[[Thread], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Thread]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.thread_update, "thread_update"],
+        *,
+        check: Optional[Callable[[Thread, Thread], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Tuple[Thread, Thread]]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.thread_delete, "thread_delete"],
+        *,
+        check: Optional[Callable[[Thread], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Thread]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.thread_join, "thread_join"],
+        *,
+        check: Optional[Callable[[Thread], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Thread]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.thread_remove, "thread_remove"],
+        *,
+        check: Optional[Callable[[Thread], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Thread]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.thread_member_join, "thread_member_join"],
+        *,
+        check: Optional[Callable[[ThreadMember], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, ThreadMember]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.thread_member_remove, "thread_member_remove"],
+        *,
+        check: Optional[Callable[[ThreadMember], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, ThreadMember]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.raw_thread_member_remove, "raw_thread_member_remove"],
+        *,
+        check: Optional[Callable[[RawThreadMemberRemoveEvent], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, RawThreadMemberRemoveEvent]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.raw_thread_update, "raw_thread_update"],
+        *,
+        check: Optional[Callable[[Thread], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Thread]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.raw_thread_delete, "raw_thread_delete"],
+        *,
+        check: Optional[Callable[[RawThreadDeleteEvent], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, RawThreadDeleteEvent]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.guild_join, "guild_join"],
+        *,
+        check: Optional[Callable[[Guild], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Guild]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.guild_remove, "guild_remove"],
+        *,
+        check: Optional[Callable[[Guild], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Guild]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.guild_update, "guild_update"],
+        *,
+        check: Optional[Callable[[Guild, Guild], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Tuple[Guild, Guild]]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.guild_available, "guild_available"],
+        *,
+        check: Optional[Callable[[Guild], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Guild]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.guild_unavailable, "guild_unavailable"],
+        *,
+        check: Optional[Callable[[Guild], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Guild]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.guild_role_create, "guild_role_create"],
+        *,
+        check: Optional[Callable[[Role], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Role]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.guild_role_delete, "guild_role_delete"],
+        *,
+        check: Optional[Callable[[Role], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Role]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.guild_role_update, "guild_role_update"],
+        *,
+        check: Optional[Callable[[Role, Role], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Tuple[Role, Role]]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.guild_emojis_update, "guild_emojis_update"],
+        *,
+        check: Optional[Callable[[Guild, Sequence[Emoji], Sequence[Emoji]], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Tuple[Guild, Sequence[Emoji], Sequence[Emoji]]]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.guild_stickers_update, "guild_stickers_update"],
+        *,
+        check: Optional[
+            Callable[[Guild, Sequence[GuildSticker], Sequence[GuildSticker]], bool]
+        ] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Tuple[Guild, Sequence[GuildSticker], Sequence[GuildSticker]]]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.guild_integrations_update, "guild_integrations_update"],
+        *,
+        check: Optional[Callable[[Guild], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Guild]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.guild_scheduled_event_create, "guild_scheduled_event_create"],
+        *,
+        check: Optional[Callable[[GuildScheduledEvent], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, GuildScheduledEvent]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.guild_scheduled_event_update, "guild_scheduled_event_update"],
+        *,
+        check: Optional[Callable[[GuildScheduledEvent, GuildScheduledEvent], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Tuple[GuildScheduledEvent, GuildScheduledEvent]]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.guild_scheduled_event_delete, "guild_scheduled_event_delete"],
+        *,
+        check: Optional[Callable[[GuildScheduledEvent], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, GuildScheduledEvent]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.guild_scheduled_event_subscribe, "guild_scheduled_event_subscribe"],
+        *,
+        check: Optional[Callable[[GuildScheduledEvent, Union[Member, User]], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Tuple[GuildScheduledEvent, Union[Member, User]]]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[
+            Event.guild_scheduled_event_unsubscribe, "guild_scheduled_event_unsubscribe"
+        ],
+        *,
+        check: Optional[Callable[[GuildScheduledEvent, Union[Member, User]], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Tuple[GuildScheduledEvent, Union[Member, User]]]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[
+            Event.raw_guild_scheduled_event_subscribe, "raw_guild_scheduled_event_subscribe"
+        ],
+        *,
+        check: Optional[Callable[[RawGuildScheduledEventUserActionEvent], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, RawGuildScheduledEventUserActionEvent]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[
+            Event.raw_guild_scheduled_event_unsubscribe, "raw_guild_scheduled_event_unsubscribe"
+        ],
+        *,
+        check: Optional[Callable[[RawGuildScheduledEventUserActionEvent], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, RawGuildScheduledEventUserActionEvent]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[
+            Event.application_command_permissions_update, "application_command_permissions_update"
+        ],
+        *,
+        check: Optional[Callable[[GuildApplicationCommandPermissions], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, GuildApplicationCommandPermissions]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.automod_action_execution, "automod_action_execution"],
+        *,
+        check: Optional[Callable[[AutoModActionExecution], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, AutoModActionExecution]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.automod_rule_create, "automod_rule_create"],
+        *,
+        check: Optional[Callable[[AutoModRule], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, AutoModRule]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.automod_rule_update, "automod_rule_update"],
+        *,
+        check: Optional[Callable[[AutoModRule], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, AutoModRule]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.automod_rule_delete, "automod_rule_delete"],
+        *,
+        check: Optional[Callable[[AutoModRule], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, AutoModRule]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.audit_log_entry_create, "audit_log_entry_create"],
+        *,
+        check: Optional[Callable[[AuditLogEntry], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, AuditLogEntry]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.integration_create, "integration_create"],
+        *,
+        check: Optional[Callable[[Integration], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Integration]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.integration_update, "integration_update"],
+        *,
+        check: Optional[Callable[[Integration], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Integration]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.raw_integration_delete, "raw_integration_delete"],
+        *,
+        check: Optional[Callable[[RawIntegrationDeleteEvent], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, RawIntegrationDeleteEvent]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.member_join, "member_join"],
+        *,
+        check: Optional[Callable[[Member], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Member]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.member_remove, "member_remove"],
+        *,
+        check: Optional[Callable[[Member], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Member]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.member_update, "member_update"],
+        *,
+        check: Optional[Callable[[Member, Member], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Tuple[Member, Member]]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.raw_member_remove, "raw_member_remove"],
+        *,
+        check: Optional[Callable[[RawGuildMemberRemoveEvent], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, RawGuildMemberRemoveEvent]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.raw_member_update, "raw_member_update"],
+        *,
+        check: Optional[Callable[[Member], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Member]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.member_ban, "member_ban"],
+        *,
+        check: Optional[Callable[[Guild, Union[User, Member]], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Tuple[Guild, Union[User, Member]]]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.member_unban, "member_unban"],
+        *,
+        check: Optional[Callable[[Guild, User], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Tuple[Guild, User]]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.presence_update, "presence_update"],
+        *,
+        check: Optional[Callable[[Member, Member], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Tuple[Member, Member]]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.user_update, "user_update"],
+        *,
+        check: Optional[Callable[[User, User], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Tuple[User, User]]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.voice_state_update, "voice_state_update"],
+        *,
+        check: Optional[Callable[[Member, VoiceState, VoiceState], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Tuple[Member, VoiceState, VoiceState]]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.voice_channel_effect, "voice_channel_effect"],
+        *,
+        check: Optional[Callable[[GuildChannel, Member, VoiceChannelEffect], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Tuple[GuildChannel, Member, VoiceChannelEffect]]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.raw_voice_channel_effect, "raw_voice_channel_effect"],
+        *,
+        check: Optional[Callable[[RawVoiceChannelEffectEvent], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, RawVoiceChannelEffectEvent]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.stage_instance_create, "stage_instance_create"],
+        *,
+        check: Optional[Callable[[StageInstance], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, StageInstance]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.stage_instance_delete, "stage_instance_delete"],
+        *,
+        check: Optional[Callable[[StageInstance, StageInstance], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Tuple[StageInstance, StageInstance]]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.stage_instance_update, "stage_instance_update"],
+        *,
+        check: Optional[Callable[[StageInstance], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, StageInstance]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.application_command, "application_command"],
+        *,
+        check: Optional[Callable[[ApplicationCommandInteraction[Self]], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, ApplicationCommandInteraction[Self]]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.application_command_autocomplete, "application_command_autocomplete"],
+        *,
+        check: Optional[Callable[[ApplicationCommandInteraction[Self]], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, ApplicationCommandInteraction[Self]]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.button_click, "button_click"],
+        *,
+        check: Optional[Callable[[MessageInteraction[Self]], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, MessageInteraction[Self]]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.dropdown, "dropdown"],
+        *,
+        check: Optional[Callable[[MessageInteraction[Self]], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, MessageInteraction[Self]]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.interaction, "interaction"],
+        *,
+        check: Optional[Callable[[Interaction[Self]], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Interaction[Self]]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.message_interaction, "message_interaction"],
+        *,
+        check: Optional[Callable[[MessageInteraction[Self]], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, MessageInteraction[Self]]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.modal_submit, "modal_submit"],
+        *,
+        check: Optional[Callable[[ModalInteraction[Self]], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, ModalInteraction[Self]]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.message, "message"],
+        *,
+        check: Optional[Callable[[Message], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Message]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.message_edit, "message_edit"],
+        *,
+        check: Optional[Callable[[Message, Message], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Tuple[Message, Message]]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.message_delete, "message_delete"],
+        *,
+        check: Optional[Callable[[Message], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Message]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.bulk_message_delete, "bulk_message_delete"],
+        *,
+        check: Optional[Callable[[List[Message]], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, List[Message]]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.poll_vote_add, "poll_vote_add"],
+        *,
+        check: Optional[Callable[[Member, PollAnswer], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Tuple[Member, PollAnswer]]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.poll_vote_remove, "poll_vote_remove"],
+        *,
+        check: Optional[Callable[[Member, PollAnswer], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Tuple[Member, PollAnswer]]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.raw_message_edit, "raw_message_edit"],
+        *,
+        check: Optional[Callable[[RawMessageUpdateEvent], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, RawMessageUpdateEvent]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.raw_message_delete, "raw_message_delete"],
+        *,
+        check: Optional[Callable[[RawMessageDeleteEvent], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, RawMessageDeleteEvent]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.raw_bulk_message_delete, "raw_bulk_message_delete"],
+        *,
+        check: Optional[Callable[[RawBulkMessageDeleteEvent], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, RawBulkMessageDeleteEvent]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.raw_poll_vote_add, "raw_poll_vote_add"],
+        *,
+        check: Optional[Callable[[RawPollVoteActionEvent], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, RawPollVoteActionEvent]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.raw_poll_vote_remove, "raw_poll_vote_remove"],
+        *,
+        check: Optional[Callable[[RawPollVoteActionEvent], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, RawPollVoteActionEvent]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.reaction_add, "reaction_add"],
+        *,
+        check: Optional[Callable[[Reaction, Union[Member, User]], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Tuple[Reaction, Union[Member, User]]]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.reaction_remove, "reaction_remove"],
+        *,
+        check: Optional[Callable[[Reaction, Union[Member, User]], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Tuple[Reaction, Union[Member, User]]]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.reaction_clear, "reaction_clear"],
+        *,
+        check: Optional[Callable[[Message, List[Reaction]], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Tuple[Message, List[Reaction]]]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.reaction_clear_emoji, "reaction_clear_emoji"],
+        *,
+        check: Optional[Callable[[Reaction], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Reaction]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.raw_presence_update, "raw_presence_update"],
+        *,
+        check: Optional[Callable[[RawPresenceUpdateEvent], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, RawPresenceUpdateEvent]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.raw_reaction_add, "raw_reaction_add"],
+        *,
+        check: Optional[Callable[[RawReactionActionEvent], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, RawReactionActionEvent]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.raw_reaction_remove, "raw_reaction_remove"],
+        *,
+        check: Optional[Callable[[RawReactionActionEvent], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, RawReactionActionEvent]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.raw_reaction_clear, "raw_reaction_clear"],
+        *,
+        check: Optional[Callable[[RawReactionClearEvent], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, RawReactionClearEvent]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.raw_reaction_clear_emoji, "raw_reaction_clear_emoji"],
+        *,
+        check: Optional[Callable[[RawReactionClearEmojiEvent], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, RawReactionClearEmojiEvent]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.typing, "typing"],
+        *,
+        check: Optional[
+            Callable[[Union[Messageable, ForumChannel], Union[User, Member], datetime], bool]
+        ] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[
+        Any, Any, Tuple[Union[Messageable, ForumChannel], Union[User, Member], datetime]
+    ]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.raw_typing, "raw_typing"],
+        *,
+        check: Optional[Callable[[RawTypingEvent], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, RawTypingEvent]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.entitlement_create, "entitlement_create"],
+        *,
+        check: Optional[Callable[[Entitlement], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Entitlement]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.entitlement_update, "entitlement_update"],
+        *,
+        check: Optional[Callable[[Entitlement], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Entitlement]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self,
+        event: Literal[Event.entitlement_delete, "entitlement_delete"],
+        *,
+        check: Optional[Callable[[Entitlement], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Entitlement]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self: AnyPrefixBotT,
+        event: Literal[Event.command, "command"],
+        *,
+        check: Optional[Callable[[commands.Context[AnyPrefixBotT]], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, commands.Context[AnyPrefixBotT]]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self: AnyPrefixBotT,
+        event: Literal[Event.command_completion, "command_completion"],
+        *,
+        check: Optional[Callable[[commands.Context[AnyPrefixBotT]], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, commands.Context[AnyPrefixBotT]]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self: AnyPrefixBotT,
+        event: Literal[Event.command_error, "command_error"],
+        *,
+        check: Optional[
+            Callable[[commands.Context[AnyPrefixBotT], commands.CommandError], bool]
+        ] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Tuple[commands.Context[AnyPrefixBotT], commands.CommandError]]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self: AnyBotT,
+        event: Literal[Event.slash_command, "slash_command"],
+        *,
+        check: Optional[Callable[[ApplicationCommandInteraction[AnyBotT]], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, ApplicationCommandInteraction[AnyBotT]]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self: AnyBotT,
+        event: Literal[Event.slash_command_completion, "slash_command_completion"],
+        *,
+        check: Optional[Callable[[ApplicationCommandInteraction[AnyBotT]], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, ApplicationCommandInteraction[AnyBotT]]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self: AnyBotT,
+        event: Literal[Event.slash_command_error, "slash_command_error"],
+        *,
+        check: Optional[
+            Callable[[ApplicationCommandInteraction[AnyBotT], commands.CommandError], bool]
+        ] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Tuple[ApplicationCommandInteraction[AnyBotT], commands.CommandError]]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self: AnyBotT,
+        event: Literal[Event.user_command, "user_command"],
+        *,
+        check: Optional[Callable[[ApplicationCommandInteraction[AnyBotT]], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, ApplicationCommandInteraction[AnyBotT]]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self: AnyBotT,
+        event: Literal[Event.user_command_completion, "user_command_completion"],
+        *,
+        check: Optional[Callable[[ApplicationCommandInteraction[AnyBotT]], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, ApplicationCommandInteraction[AnyBotT]]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self: AnyBotT,
+        event: Literal[Event.user_command_error, "user_command_error"],
+        *,
+        check: Optional[
+            Callable[[ApplicationCommandInteraction[AnyBotT], commands.CommandError], bool]
+        ] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Tuple[ApplicationCommandInteraction[AnyBotT], commands.CommandError]]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self: AnyBotT,
+        event: Literal[Event.message_command, "message_command"],
+        *,
+        check: Optional[Callable[[ApplicationCommandInteraction[AnyBotT]], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, ApplicationCommandInteraction[AnyBotT]]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self: AnyBotT,
+        event: Literal[Event.message_command_completion, "message_command_completion"],
+        *,
+        check: Optional[Callable[[ApplicationCommandInteraction[AnyBotT]], bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, ApplicationCommandInteraction[AnyBotT]]:
+        ...
+
+    @overload
+    @_generated
+    def wait_for(
+        self: AnyBotT,
+        event: Literal[Event.message_command_error, "message_command_error"],
+        *,
+        check: Optional[
+            Callable[[ApplicationCommandInteraction[AnyBotT], commands.CommandError], bool]
+        ] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Tuple[ApplicationCommandInteraction[AnyBotT], commands.CommandError]]:
+        ...
+
+    # fallback for custom events
+
+    @overload
+    @_overload_with_events
+    def wait_for(
+        self,
+        event: str,
+        *,
+        check: Optional[Callable[..., bool]] = None,
+        timeout: Optional[float] = None,
+    ) -> Coroutine[Any, Any, Any]:
+        ...
+
     def wait_for(
         self,
         event: Union[str, Event],
         *,
         check: Optional[Callable[..., bool]] = None,
         timeout: Optional[float] = None,
-    ) -> Any:
+    ) -> Coroutine[Any, Any, Any]:
         """|coro|
 
         Waits for a WebSocket event to be dispatched.

@@ -69,7 +69,6 @@ if TYPE_CHECKING:
     from ..app_commands import Choices
     from ..client import Client
     from ..embeds import Embed
-    from ..ext.commands import AutoShardedBot, Bot
     from ..file import File
     from ..mentions import AllowedMentions
     from ..poll import Poll
@@ -86,8 +85,6 @@ if TYPE_CHECKING:
     from ..ui.view import View
     from .message import MessageInteraction
     from .modal import ModalInteraction
-
-    AnyBot = Union[Bot, AutoShardedBot]
 
 
 MISSING: Any = utils.MISSING
