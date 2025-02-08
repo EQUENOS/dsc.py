@@ -14,6 +14,7 @@ from typing import (
     ClassVar,
     Coroutine,
     Dict,
+    Final,
     Iterable,
     List,
     Literal,
@@ -104,6 +105,11 @@ def _workaround_set_api_version(version: Literal[9, 10]) -> None:
     global _API_VERSION  # noqa: PLW0603
     _API_VERSION = version
     Route.BASE = f"https://discord.com/api/v{_API_VERSION}"
+
+
+USER_AGENT: Final[str] = (
+    "DiscordBot (https://github.com/DisnakeDev/disnake {0}) Python/{1[0]}.{1[1]} aiohttp/{2}"
+).format(__version__, sys.version_info, aiohttp.__version__)
 
 
 async def json_or_text(response: aiohttp.ClientResponse) -> Union[Dict[str, Any], str]:
@@ -247,13 +253,18 @@ class HTTPClient:
         self.proxy_auth: Optional[aiohttp.BasicAuth] = proxy_auth
         self.use_clock: bool = not unsync_clock
 
-        user_agent = "DiscordBot (https://github.com/DisnakeDev/disnake {0}) Python/{1[0]}.{1[1]} aiohttp/{2}"
-        self.user_agent: str = user_agent.format(__version__, sys.version_info, aiohttp.__version__)
+        # n.b. if this is changed after the ClientSession is created,
+        # the new user agent will not be used until the session is recreated
+        self.user_agent: str = USER_AGENT
 
     def recreate(self) -> None:
         if self.__session.closed:
             self.__session = aiohttp.ClientSession(
-                connector=self.connector, ws_response_class=DiscordClientWebSocketResponse
+                connector=self.connector,
+                ws_response_class=DiscordClientWebSocketResponse,
+                headers={
+                    "User-Agent": self.user_agent,
+                },
             )
 
     async def ws_connect(self, url: str, *, compress: int = 0) -> aiohttp.ClientWebSocketResponse:
@@ -287,9 +298,8 @@ class HTTPClient:
             self._locks[bucket] = lock = asyncio.Lock()
 
         # header creation
-        headers: Dict[str, str] = {
-            "User-Agent": self.user_agent,
-        }
+        # User-Agent is set on the session itself
+        headers: Dict[str, str] = {}
 
         if self.token is not None:
             headers["Authorization"] = "Bot " + self.token
@@ -459,7 +469,11 @@ class HTTPClient:
     async def static_login(self, token: str) -> user.User:
         # Necessary to get aiohttp to stop complaining about session creation
         self.__session = aiohttp.ClientSession(
-            connector=self.connector, ws_response_class=DiscordClientWebSocketResponse
+            connector=self.connector,
+            ws_response_class=DiscordClientWebSocketResponse,
+            headers={
+                "User-Agent": self.user_agent,
+            },
         )
         old_token = self.token
         self.token = token

@@ -1,0 +1,1 @@
+Use the library User Agent for webhooks and CDN requests rather than the default UA from aiohttp or requests.
