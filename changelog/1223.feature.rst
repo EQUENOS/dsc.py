@@ -1,0 +1,2 @@
+Edit :class:`.Emoji` to represent application emojis.
+Add new methods and properties on :class:`Client` to get, fetch and create application emojis: :meth:`Client.get_application_emoji`, :meth:`Client.fetch_application_emoji`, :meth:`Client.get_or_fetch_application_emoji`, :meth:`Client.getch_application_emoji`, :meth:`Client.fetch_application_emojis`, :attr:`Client.application_emojis` and :meth:`Client.create_application_emoji`.

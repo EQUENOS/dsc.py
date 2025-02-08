@@ -1725,6 +1725,16 @@ class HTTPClient:
             reason=reason,
         )
 
+    def get_all_app_emojis(self, app_id: Snowflake) -> Response[List[emoji.Emoji]]:
+        return self.request(Route("GET", "/applications/{app_id}/emojis", app_id=app_id))
+
+    def get_app_emoji(self, app_id: Snowflake, emoji_id: Snowflake) -> Response[emoji.Emoji]:
+        return self.request(
+            Route(
+                "GET", "/applications/{app_id}/emojis/{emoji_id}", app_id=app_id, emoji_id=emoji_id
+            )
+        )
+
     def get_all_custom_emojis(self, guild_id: Snowflake) -> Response[List[emoji.Emoji]]:
         return self.request(Route("GET", "/guilds/{guild_id}/emojis", guild_id=guild_id))
 
@@ -1732,6 +1742,45 @@ class HTTPClient:
         return self.request(
             Route(
                 "GET", "/guilds/{guild_id}/emojis/{emoji_id}", guild_id=guild_id, emoji_id=emoji_id
+            )
+        )
+
+    def create_app_emoji(
+        self,
+        app_id: Snowflake,
+        name: str,
+        image: str,
+    ) -> Response[emoji.Emoji]:
+        payload: Dict[str, Any] = {
+            "name": name,
+            "image": image,
+        }
+
+        r = Route("POST", "/applications/{app_id}/emojis", app_id=app_id)
+        return self.request(r, json=payload)
+
+    def edit_app_emoji(
+        self,
+        app_id: Snowflake,
+        emoji_id: Snowflake,
+        name: str,
+    ) -> Response[emoji.Emoji]:
+        payload: Dict[str, Any] = {
+            "name": name,
+        }
+
+        r = Route(
+            "PATCH", "/applications/{app_id}/emojis/{emoji_id}", app_id=app_id, emoji_id=emoji_id
+        )
+        return self.request(r, json=payload)
+
+    def delete_app_emoji(self, app_id: Snowflake, emoji_id: Snowflake) -> Response[None]:
+        return self.request(
+            Route(
+                "DELETE",
+                "/applications/{app_id}/emojis/{emoji_id}",
+                app_id=app_id,
+                emoji_id=emoji_id,
             )
         )
 

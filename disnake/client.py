@@ -402,6 +402,7 @@ class Client:
         intents: Optional[Intents] = None,
         chunk_guilds_at_startup: Optional[bool] = None,
         member_cache_flags: Optional[MemberCacheFlags] = None,
+        cache_app_emojis_at_startup: bool = False,
     ) -> None:
         # self.ws is set in the connect method
         self.ws: DiscordWebSocket = None  # type: ignore
@@ -445,6 +446,7 @@ class Client:
             intents=intents,
             chunk_guilds_at_startup=chunk_guilds_at_startup,
             member_cache_flags=member_cache_flags,
+            cache_app_emojis_at_startup=cache_app_emojis_at_startup,
         )
         self.shard_id: Optional[int] = shard_id
         self.shard_count: Optional[int] = shard_count
@@ -499,6 +501,7 @@ class Client:
         intents: Optional[Intents],
         chunk_guilds_at_startup: Optional[bool],
         member_cache_flags: Optional[MemberCacheFlags],
+        cache_app_emojis_at_startup: bool,
     ) -> ConnectionState:
         return ConnectionState(
             dispatch=self.dispatch,
@@ -516,6 +519,7 @@ class Client:
             intents=intents,
             chunk_guilds_at_startup=chunk_guilds_at_startup,
             member_cache_flags=member_cache_flags,
+            cache_app_emojis_at_startup=cache_app_emojis_at_startup,
         )
 
     def _handle_ready(self) -> None:
@@ -563,6 +567,14 @@ class Client:
     def emojis(self) -> List[Emoji]:
         """List[:class:`.Emoji`]: The emojis that the connected client has."""
         return self._connection.emojis
+
+    @property
+    def application_emojis(self) -> List[Emoji]:
+        """List[:class:`.Emoji`]: The application emojis that the connected client has.
+
+        .. versionadded:: 2.10
+        """
+        return self._connection.application_emojis
 
     @property
     def stickers(self) -> List[GuildSticker]:
@@ -717,6 +729,58 @@ class Client:
         return user
 
     getch_user = get_or_fetch_user
+
+    @overload
+    async def get_or_fetch_application_emoji(
+        self, emoji_id: int, *, strict: Literal[False] = ...
+    ) -> Optional[Emoji]:
+        ...
+
+    @overload
+    async def get_or_fetch_application_emoji(
+        self, emoji_id: int, *, strict: Literal[True] = ...
+    ) -> Emoji:
+        ...
+
+    async def get_or_fetch_application_emoji(
+        self, emoji_id: int, *, strict: bool = False
+    ) -> Optional[Emoji]:
+        """|coro|
+
+        Tries to get the application emoji from the cache. If it fails,
+        fetches the app emoji from the API.
+
+        This only propagates exceptions when the ``strict`` parameter is enabled.
+
+        .. versionadded:: 2.10
+
+        Parameters
+        ----------
+        emoji_id: :class:`int`
+            The ID to search for.
+        strict: :class:`bool`
+            Whether to propagate exceptions from :func:`fetch_application_emoji`
+            instead of returning ``None`` in case of failure
+            (e.g. if the app emoji wasn't found).
+            Defaults to ``False``.
+
+        Returns
+        -------
+        Optional[:class:`~disnake.Emoji`]
+            The app emoji with the given ID, or ``None`` if not found and ``strict`` is set to ``False``.
+        """
+        app_emoji = self.get_application_emoji(emoji_id)
+        if app_emoji is not None:
+            return app_emoji
+        try:
+            app_emoji = await self.fetch_application_emoji(emoji_id)
+        except Exception:
+            if strict:
+                raise
+            return None
+        return app_emoji
+
+    getch_application_emoji = get_or_fetch_application_emoji
 
     def is_ready(self) -> bool:
         """Whether the client's internal cache is ready for use.
@@ -1500,6 +1564,28 @@ class Client:
             The custom emoji or ``None`` if not found.
         """
         return self._connection.get_emoji(id)
+
+    def get_application_emoji(self, emoji_id: int, /) -> Optional[Emoji]:
+        """Returns an application emoji with the given ID.
+
+        .. versionadded:: 2.10
+
+        .. note::
+
+            If this returns ``None`` consider executing :meth:`fetch_application_emoji`
+            or enable :attr:`disnake.Client.cache_app_emoji`.
+
+        Parameters
+        ----------
+        emoji_id: :class:`int`
+            The ID to search for.
+
+        Returns
+        -------
+        Optional[:class:`.Emoji`]
+            The returned application emoji or ``None`` if not found.
+        """
+        return self._connection.get_application_emoji(emoji_id)
 
     def get_sticker(self, id: int, /) -> Optional[GuildSticker]:
         """Returns a guild sticker with the given ID.
@@ -2419,6 +2505,114 @@ class Client:
         if "rpc_origins" not in data:
             data["rpc_origins"] = None
         return AppInfo(self._connection, data)
+
+    async def fetch_application_emoji(self, emoji_id: int, /, cache: bool = False) -> Emoji:
+        """|coro|
+
+        Retrieves an application level :class:`~disnake.Emoji` based on its ID.
+
+        .. note::
+
+            This method is an API call. If you have :attr:`disnake.Client.cache_application_emojis` enabled, consider :meth:`get_application_emoji` instead.
+
+        .. versionadded:: 2.10
+
+        Parameters
+        ----------
+        emoji_id: :class:`int`
+            The ID of the emoji to retrieve.
+        cache: :class:`bool`
+            Whether to update the cache.
+
+        Raises
+        ------
+        NotFound
+            The app emoji couldn't be found.
+        Forbidden
+            You are not allowed to get the app emoji.
+
+        Returns
+        -------
+        :class:`.Emoji`
+            The application emoji you requested.
+        """
+        data = await self.http.get_app_emoji(self.application_id, emoji_id)
+
+        if cache:
+            return self._connection.store_application_emoji(data=data)
+        return Emoji(guild=None, state=self._connection, data=data)
+
+    async def create_application_emoji(self, *, name: str, image: AssetBytes) -> Emoji:
+        """|coro|
+
+        Creates an application emoji.
+
+        .. versionadded:: 2.10
+
+        Parameters
+        ----------
+        name: :class:`str`
+            The emoji name. Must be at least 2 characters.
+        image: |resource_type|
+            The image data of the emoji.
+            Only JPG, PNG and GIF images are supported.
+
+        Raises
+        ------
+        NotFound
+            The ``image`` asset couldn't be found.
+        Forbidden
+            You are not allowed to create app emojis.
+        HTTPException
+            An error occurred creating an app emoji.
+        TypeError
+            The ``image`` asset is a lottie sticker (see :func:`Sticker.read <disnake.Sticker.read>`).
+        ValueError
+            Wrong image format passed for ``image``.
+
+        Returns
+        -------
+        :class:`.Emoji`
+            The newly created application emoji.
+        """
+        img = await utils._assetbytes_to_base64_data(image)
+        data = await self.http.create_app_emoji(self.application_id, name, img)
+        return self._connection.store_application_emoji(data)
+
+    async def fetch_application_emojis(self, *, cache: bool = False) -> List[Emoji]:
+        """|coro|
+
+        Retrieves all the :class:`.Emoji` of the application.
+
+        ..  versionadded:: 2.10
+
+        Parameters
+        ----------
+        cache: :class:`bool`
+            Whether to update the cache.
+
+        Raises
+        ------
+        NotFound
+            The app emojis for this application ID couldn't be found.
+        Forbidden
+            You are not allowed to get app emojis.
+
+        Returns
+        -------
+        List[:class:`.Emoji`]
+            The list of application emojis you requested.
+        """
+        data = await self.http.get_all_app_emojis(self.application_id)
+
+        if cache:
+            app_emojis = []
+            for emoji_data in data:
+                app_emojis.append(self._connection.store_application_emoji(emoji_data))
+
+            return app_emojis
+
+        return [Emoji(guild=None, state=self._connection, data=emoji_data) for emoji_data in data]
 
     async def fetch_user(self, user_id: int, /) -> User:
         """|coro|

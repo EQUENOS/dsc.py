@@ -222,6 +222,7 @@ class ConnectionState:
         intents: Optional[Intents] = None,
         chunk_guilds_at_startup: Optional[bool] = None,
         member_cache_flags: Optional[MemberCacheFlags] = None,
+        cache_app_emojis_at_startup: bool = False,
     ) -> None:
         self.loop: asyncio.AbstractEventLoop = loop
         self.http: HTTPClient = http
@@ -300,6 +301,8 @@ class ConnectionState:
             if attr.startswith("parse_"):
                 parsers[attr[6:].upper()] = func
 
+        self.cache_app_emojis_at_startup = cache_app_emojis_at_startup
+
         self.clear()
 
     def clear(
@@ -312,6 +315,7 @@ class ConnectionState:
         # - accesses on `_users` are slower, e.g. `__getitem__` takes ~1us with weakrefs and ~0.2us without
         self._users: weakref.WeakValueDictionary[int, User] = weakref.WeakValueDictionary()
         self._emojis: Dict[int, Emoji] = {}
+        self._application_emojis: Dict[int, Emoji] = {}
         self._stickers: Dict[int, GuildSticker] = {}
         self._soundboard_sounds: Dict[int, GuildSoundboardSound] = {}
         self._guilds: Dict[int, Guild] = {}
@@ -417,6 +421,11 @@ class ConnectionState:
         # the id will be present here
         emoji_id = int(data["id"])  # type: ignore
         self._emojis[emoji_id] = emoji = Emoji(guild=guild, state=self, data=data)
+        return emoji
+
+    def store_application_emoji(self, data: EmojiPayload) -> Emoji:
+        emoji_id = int(data["id"])  # type: ignore
+        self._application_emojis[emoji_id] = emoji = Emoji(guild=None, state=self, data=data)
         return emoji
 
     def store_sticker(self, guild: Guild, data: GuildStickerPayload) -> GuildSticker:
@@ -543,6 +552,10 @@ class ConnectionState:
         return list(self._emojis.values())
 
     @property
+    def application_emojis(self) -> List[Emoji]:
+        return list(self._application_emojis.values())
+
+    @property
     def stickers(self) -> List[GuildSticker]:
         return list(self._stickers.values())
 
@@ -553,6 +566,10 @@ class ConnectionState:
     def get_emoji(self, emoji_id: Optional[int]) -> Optional[Emoji]:
         # the keys of self._emojis are ints
         return self._emojis.get(emoji_id)  # type: ignore
+
+    def get_application_emoji(self, emoji_id: Optional[int]) -> Optional[Emoji]:
+        # the keys of self._application_emojis are ints
+        return self._application_emojis.get(emoji_id)  # type: ignore
 
     def get_sticker(self, sticker_id: Optional[int]) -> Optional[GuildSticker]:
         # the keys of self._stickers are ints

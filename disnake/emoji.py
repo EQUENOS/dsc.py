@@ -51,6 +51,10 @@ class Emoji(_EmojiTag, AssetMixin):
 
             Returns the emoji rendered for Discord.
 
+    .. versionchanged:: 2.10
+
+        This class can now represents app emojis too. Denoted by having :attr:`.Emoji.guild_id` as ``None``.
+
     Attributes
     ----------
     name: :class:`str`
@@ -63,8 +67,8 @@ class Emoji(_EmojiTag, AssetMixin):
         Whether the emoji is animated or not.
     managed: :class:`bool`
         Whether the emoji is managed by a Twitch integration.
-    guild_id: :class:`int`
-        The guild ID the emoji belongs to.
+    guild_id: Optional[:class:`int`]
+        The guild ID the emoji belongs to. ``None`` if this is an app emoji.
     available: :class:`bool`
         Whether the emoji is available for use.
     user: Optional[:class:`User`]
@@ -86,9 +90,13 @@ class Emoji(_EmojiTag, AssetMixin):
     )
 
     def __init__(
-        self, *, guild: Union[Guild, GuildPreview], state: ConnectionState, data: EmojiPayload
+        self,
+        *,
+        guild: Optional[Union[Guild, GuildPreview]],
+        state: ConnectionState,
+        data: EmojiPayload,
     ) -> None:
-        self.guild_id: int = guild.id
+        self.guild_id: Optional[int] = guild.id if guild else None
         self._state: ConnectionState = state
         self._from_data(data)
 
@@ -151,16 +159,32 @@ class Emoji(_EmojiTag, AssetMixin):
         and count towards a separate limit of 25 emojis.
         """
         guild = self.guild
-        if guild is None:  # pyright: ignore[reportUnnecessaryComparison]
+        if guild is None:
             return []
 
         return [role for role in guild.roles if self._roles.has(role.id)]
 
     @property
-    def guild(self) -> Guild:
-        """:class:`Guild`: The guild this emoji belongs to."""
+    def guild(self) -> Optional[Guild]:
+        """Optional[:class:`Guild`]: The guild this emoji belongs to. ``None`` if this is an app emoji.
+
+        .. versionchanged:: 2.10
+
+            This can now return ``None`` if the emoji is an
+            application owned emoji.
+        """
         # this will most likely never return None but there's a possibility
-        return self._state._get_guild(self.guild_id)  # type: ignore
+        return self._state._get_guild(self.guild_id)
+
+    @property
+    def application_id(self) -> Optional[int]:
+        """Optional[:class:`int`]: The ID of the application which owns this emoji.
+
+        .. versionadded:: 2.10
+        """
+        if self.guild is None:
+            return None
+        return self._state.application_id
 
     def is_usable(self) -> bool:
         """Whether the bot can use this emoji.
@@ -173,6 +197,8 @@ class Emoji(_EmojiTag, AssetMixin):
             return False
         if not self._roles:
             return True
+        if not self.guild:
+            return self.available
         emoji_roles, my_roles = self._roles, self.guild.me._roles
         return any(my_roles.has(role_id) for role_id in emoji_roles)
 
@@ -196,6 +222,13 @@ class Emoji(_EmojiTag, AssetMixin):
         HTTPException
             An error occurred deleting the emoji.
         """
+        # this is an app emoji
+        if self.guild is None:
+            if self.application_id is None:
+                # should never happen
+                raise ValueError("Idk message about invalid state?! Pls catch this when reviewing")
+
+            return await self._state.http.delete_app_emoji(self.application_id, self.id)
         await self._state.http.delete_custom_emoji(self.guild.id, self.id, reason=reason)
 
     async def edit(
@@ -242,7 +275,14 @@ class Emoji(_EmojiTag, AssetMixin):
         if roles is not MISSING:
             payload["roles"] = [role.id for role in roles]
 
-        data = await self._state.http.edit_custom_emoji(
-            self.guild.id, self.id, payload=payload, reason=reason
-        )
+        if self.guild is None:
+            if self.application_id is None:
+                # should never happen
+                raise ValueError("Idk message about invalid state?! Pls catch this when reviewing")
+
+            data = await self._state.http.edit_app_emoji(self.application_id, self.id, name)
+        else:
+            data = await self._state.http.edit_custom_emoji(
+                self.guild.id, self.id, payload=payload, reason=reason
+            )
         return Emoji(guild=self.guild, data=data, state=self._state)
